@@ -1,0 +1,8 @@
+pymongo
+finnhub-python
+sshtunnel
+yfinance
+pandas
+pandas_market_calendars
+# --no-binary=:all:
+git+https://github.com/m0rp43us/openmeteopy  # current version (~0.1.1, new API with OWmanager)
