@@ -5,7 +5,7 @@ from sshtunnel import SSHTunnelForwarder
 import time
 from pathlib import Path
 
-load_dotenv(Path(__file__).parent / 'student.env')
+load_dotenv(Path(__file__).parent / '.env')
 
 # SSH credentials
 SSH_HOST = os.getenv("SSH_HOST")
