@@ -48,6 +48,7 @@ except ImportError:  # Use the vendored library if pip install fails in the cont
     from libs.openmeteopy.daily.historical import DailyHistorical
     from libs.openmeteopy.options.historical import HistoricalOptions
 
+from snowflake.connector.pandas_tools import write_pandas
 
 # -- Set up logging
 log = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ log = logging.getLogger(__name__)
 # -- DAG Configuration
 STAGING_AREA = Path("staging/api")
 PROCESSED_LOG_FILE = STAGING_AREA / "processed_dates.txt"
-SNOWFLAKE_TABLE = "YOUR_WEATHER_TABLE_NAME_HERE"  # TODO: Replace with your target table name
+SNOWFLAKE_TABLE = "UNDERWOOD_J_M1"  # TODO: Replace with your target table name -- DONE
 
 # A dictionary of cities and their coordinates for the API call
 CITIES = {
@@ -121,12 +122,26 @@ def api_template_pipeline():
                     longitude=coords["longitude"],
                     start_date=date_str,
                     end_date=date_str,
+                    # change temp to farenheit beforehand so no need for unit conversion
+                    temperature_unit= "fahrenheit",
                 )
                 
-                # TODO: Add more daily variables here!
+                # TODO: Add more daily variables here! -- DONE
                 # Refer to the `openmeteopy.daily.DailyHistorical` class for available options.
                 # Example: .weather_code().sunrise().sunset()
-                daily = DailyHistorical().temperature_2m_max().temperature_2m_min().precipitation_sum().windspeed_10m_max()
+                daily = (
+                    DailyHistorical()
+                    .temperature_2m_max()
+                    .temperature_2m_min()
+                    .precipitation_sum()
+                    .windspeed_10m_max()
+                    .weathercode()
+                    .sunrise()
+                    .sunset()
+                    .apparent_temperature_max()
+                    .apparent_temperature_min()
+                    .shortwave_radiation_sum()
+                )
 
                 mgr = OpenMeteo(options, daily=daily.all())
                 response = mgr.get_dict()
@@ -166,10 +181,15 @@ def api_template_pipeline():
         log.info(f"Transforming data from {filepath}...")
         df = pd.read_csv(filepath)
 
-        # TODO: Add your data transformation logic here.
+        # TODO: Add your data transformation logic here. -- DONE
         # For example, you could add a unique ID, convert units, or derive new columns.
         # df['temp_range_c'] = df['max_temp'] - df['min_temp']
         # df['load_ts'] = datetime.utcnow()
+        df["max_wind_mph"] = (df["max_wind"] / 1.609344).round(2)
+        df["precip_inches"] = (df["precip"] / 25.4).round(2)
+        df["temp_midpoint_f"] = (
+            (df["max_temp"] + df["min_temp"]) / 2
+        ).round(2)
         
         log.info(f"Transformation complete. DataFrame has {len(df)} rows.")
         return df, date_str
@@ -186,15 +206,23 @@ def api_template_pipeline():
             return date_str
 
         log.info(f"Loading {len(df)} rows into Snowflake table: {SNOWFLAKE_TABLE}")
-        # conn = get_snowflake_connection() # TODO: Uncomment when ready
+        conn = get_snowflake_connection() # TODO: Uncomment when ready
         try:
             # TODO: Use conn.cursor() to execute a MERGE statement or `write_pandas`.
-            # A MERGE statement is recommended for idempotency.
-            # Example:
-            # from snowflake.connector.pandas_tools import write_pandas
-            # success, _, _, _ = write_pandas(conn, df, SNOWFLAKE_TABLE, auto_create_table=True, overwrite=False)
-            # if not success:
-            #     raise Exception("Failed to write to Snowflake.")
+            df_to_load = df.rename(columns=str.upper)
+
+            success, _, rows_loaded, _ = write_pandas(
+                conn=conn,
+                df=df_to_load,
+                table_name=SNOWFLAKE_TABLE,
+                auto_create_table=True,
+                overwrite=False,
+            )
+
+            if not success:
+                raise RuntimeError("Failed to write data to Snowflake.")
+
+            log.info(f"Loaded {rows_loaded} rows into {SNOWFLAKE_TABLE}.")
             
             # --- Log Processed Date on Success ---
             with open(PROCESSED_LOG_FILE, "a") as f:
@@ -205,7 +233,7 @@ def api_template_pipeline():
             log.error(f"Snowflake load failed: {e}")
             raise
         finally:
-            # if conn: conn.close() # TODO: Uncomment when ready
+            if conn: conn.close() # TODO: Uncomment when ready
             log.info("Snowflake connection placeholder closed.")
             
         return date_str

@@ -18,10 +18,10 @@ from utils import get_snowflake_connection
 # -------------------------------------------------------------------
 # Configuration
 # -------------------------------------------------------------------
-ON_OFF_SNOWFLAKE_LOAD_ENABLED = False  # Set to True to enable Snowflake loading
+ON_OFF_SNOWFLAKE_LOAD_ENABLED = True  # Set to True to enable Snowflake loading
 SNOWFLAKE_DATABASE = os.getenv("SNOWFLAKE_DATABASE", "PROJECT_DB") # Default to PROJECT_DB
 SNOWFLAKE_SCHEMA = os.getenv("SNOWFLAKE_SCHEMA", "RAW") # Default to RAW
-SNOWFLAKE_TABLE = "BORED_API_ACTIVITIES" # Table name for Bored API data
+SNOWFLAKE_TABLE = "STARTER_DAG_UNDERWOOD_J" # Table name for Bored API data
 
 @dag(
     dag_id="starter_dag",
