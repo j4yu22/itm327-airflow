@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>lab1_intro</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="lab1_intro_files/libs/clipboard/clipboard.min.js"></script>
+<script src="lab1_intro_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="lab1_intro_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="lab1_intro_files/libs/quarto-html/popper.min.js"></script>
+<script src="lab1_intro_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="lab1_intro_files/libs/quarto-html/anchor.min.js"></script>
+<link href="lab1_intro_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="lab1_intro_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="lab1_intro_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="lab1_intro_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="lab1_intro_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+
+
+
+<section id="lab-1-introduction-data-warehouse-foundations" class="level1">
+<h1>Lab 1 Introduction: Data Warehouse Foundations</h1>
+<section id="concepts-from-chapters-16-itm-327" class="level3">
+<h3 class="anchored" data-anchor-id="concepts-from-chapters-16-itm-327">Concepts from Chapters 1–6 | ITM 327</h3>
+<p>This document connects what you read in the textbook to what you will build in Lab 1. Before jumping into Snowflake, make sure these ideas are solid. Lab 1 will make a lot more sense with them in hand.</p>
+<hr>
+</section>
+<section id="two-worlds-of-data-oltp-vs.-olap" class="level2">
+<h2 class="anchored" data-anchor-id="two-worlds-of-data-oltp-vs.-olap">1. Two Worlds of Data: OLTP vs.&nbsp;OLAP</h2>
+<p>Your textbook draws a sharp line between two types of systems:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Operational (OLTP)</th>
+<th>Data Warehouse (OLAP)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Purpose</strong></td>
+<td>Run the business</td>
+<td>Analyze the business</td>
+</tr>
+<tr class="even">
+<td><strong>Question</strong></td>
+<td>“Did the order go through?”</td>
+<td>“Which products sold best last quarter?”</td>
+</tr>
+<tr class="odd">
+<td><strong>Unit of work</strong></td>
+<td>One transaction at a time</td>
+<td>Hundreds of thousands of rows at a time</td>
+</tr>
+<tr class="even">
+<td><strong>History</strong></td>
+<td>Overwritten to reflect current state</td>
+<td>Preserved to evaluate performance over time</td>
+</tr>
+<tr class="odd">
+<td><strong>Structure</strong></td>
+<td>Normalized (3NF)</td>
+<td>Dimensional (star schema)</td>
+</tr>
+</tbody>
+</table>
+<p>Salesforce stores your opportunity and line item data in an operational system. Lab 1 asks you to take that normalized OLTP data and reshape it into a dimensional model that analysts can actually query. That reshape is the core skill of this course.</p>
+<blockquote class="blockquote">
+<p><em>“The operational systems are where you put the data in, and the DW/BI system is where you get the data out.”</em> — Kimball, Ch. 1</p>
+</blockquote>
+<hr>
+</section>
+<section id="the-star-schema" class="level2">
+<h2 class="anchored" data-anchor-id="the-star-schema">2. The Star Schema</h2>
+<p>With that distinction in mind, let’s look at the structure that makes data warehouse queries so fast and intuitive — the star schema.</p>
+<p>A dimensional model has two types of tables arranged in a <strong>star schema</strong>:</p>
+<pre><code>              dim_product
+                  |
+dim_account ── fact_opportunity_line_item ── (other dims)
+                  |
+              dim_date</code></pre>
+<section id="fact-tables" class="level3">
+<h3 class="anchored" data-anchor-id="fact-tables">Fact Tables</h3>
+<p>The center of the star. A fact table stores <strong>numeric measurements</strong> from a business event — things you can count, sum, or average. In Lab 1, that means:</p>
+<ul>
+<li>Quantity sold</li>
+<li>Unit price</li>
+<li>Total price (quantity × unit price)</li>
+</ul>
+<p>Every row in the fact table represents <strong>one measurement event</strong> at a specific level of detail. That level of detail is the <strong>grain</strong> (more on this in Section 3).</p>
+<p>Fact tables are: - <strong>Deep</strong> (many rows — potentially millions) - <strong>Narrow</strong> (few columns — mostly foreign keys and measures) - <strong>Sparse</strong> (only rows where activity actually occurred)</p>
+</section>
+<section id="dimension-tables" class="level3">
+<h3 class="anchored" data-anchor-id="dimension-tables">Dimension Tables</h3>
+<p>The points of the star. Dimension tables provide <strong>descriptive context</strong> — the who, what, where, when, and why of each fact. In Lab 1, <code>dim_product</code> and <code>dim_account</code> describe what was sold and to whom.</p>
+<p>Dimension tables are: - <strong>Wide</strong> (many columns — 50 to 100 attributes is common) - <strong>Short</strong> (fewer rows than fact tables) - <strong>Denormalized</strong> (hierarchies are flattened into a single table, not split out)</p>
+<p>That last point matters. You might be tempted to normalize <code>dim_product</code> — pulling <code>product_family</code> into its own table. Resist that urge. The textbook is explicit: dimension table space is small compared to the fact table, so you trade storage efficiency for simplicity and query speed.</p>
+<hr>
+</section>
+</section>
+<section id="the-four-step-design-process-kimball" class="level2">
+<h2 class="anchored" data-anchor-id="the-four-step-design-process-kimball">3. The Four-Step Design Process (Kimball)</h2>
+<p>Now that you know what a star schema looks like, the question becomes: how do you design one? Kimball’s four-step process gives you a repeatable approach — and the order matters.</p>
+<p>Before writing any DDL, work through these four steps in order. Skipping them, especially Step 2, is where designs go wrong.</p>
+<section id="step-1-select-the-business-process" class="level3">
+<h3 class="anchored" data-anchor-id="step-1-select-the-business-process">Step 1: Select the Business Process</h3>
+<p>Identify the <strong>business event</strong> you are measuring — not a department, a process. In Lab 1 the process is: <strong>a product being sold on a Salesforce opportunity</strong>.</p>
+</section>
+<section id="step-2-declare-the-grain" class="level3">
+<h3 class="anchored" data-anchor-id="step-2-declare-the-grain">Step 2: Declare the Grain</h3>
+<p>The grain specifies exactly what one row in your fact table represents. It must be stated precisely, in business terms.</p>
+<p>Lab 1 grain: <strong>One row per opportunity line item per product per opportunity.</strong></p>
+<blockquote class="blockquote">
+<p><em>“The grain statement determines the primary dimensionality of the fact table. Every dimension and fact you add must be consistent with this grain.”</em> — Kimball, Ch. 3</p>
+</blockquote>
+<p>If you can’t state the grain clearly before Step 3, stop. The rest of the design will drift.</p>
+</section>
+<section id="step-3-identify-the-dimensions" class="level3">
+<h3 class="anchored" data-anchor-id="step-3-identify-the-dimensions">Step 3: Identify the Dimensions</h3>
+<p>Given your grain, ask: “How do business people describe this event?” Every noun that describes the event is a candidate dimension. From the Lab 1 grain you get:</p>
+<ul>
+<li><strong>Product</strong> — what was sold → <code>dim_product</code></li>
+<li><strong>Account</strong> — who it was sold to → <code>dim_account</code></li>
+</ul>
+</section>
+<section id="step-4-identify-the-facts" class="level3">
+<h3 class="anchored" data-anchor-id="step-4-identify-the-facts">Step 4: Identify the Facts</h3>
+<p>Ask: “What is the process measuring?” All facts must be consistent with the declared grain. For Lab 1:</p>
+<ul>
+<li>Quantity (additive — can be summed across any dimension)</li>
+<li>Unit price (non-additive — do not sum; average it)</li>
+<li>Total price (additive — can be summed)</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="surrogate-keys-vs.-natural-keys" class="level2">
+<h2 class="anchored" data-anchor-id="surrogate-keys-vs.-natural-keys">4. Surrogate Keys vs.&nbsp;Natural Keys</h2>
+<p>Once you’ve designed the schema, you need to think carefully about how dimension rows are identified — and this is where a lot of first-time warehouse designers make a costly mistake.</p>
+<p>Your Salesforce tables have their own identifiers — <code>product_id</code>, <code>account_id</code>. These are <strong>natural keys</strong> (also called business keys or operational keys). Do <strong>not</strong> use them as the primary key of your dimension tables.</p>
+<p>Instead, generate a <strong>surrogate key</strong>: a simple integer assigned by the warehouse, starting at 1, that has no business meaning on its own.</p>
+<section id="why-surrogate-keys" class="level3">
+<h3 class="anchored" data-anchor-id="why-surrogate-keys">Why Surrogate Keys?</h3>
+<ol type="1">
+<li><strong>Buffer from operational changes</strong> — Salesforce can change its key scheme without breaking your warehouse.</li>
+<li><strong>Handle multiple sources</strong> — If you later add a second CRM, you can map both sources to a single surrogate key.</li>
+<li><strong>Performance</strong> — A 4-byte integer is faster to join than a long alphanumeric string across millions of fact rows.</li>
+<li><strong>Enable SCD tracking</strong> — For Type 2 changes (Ch. 5), you may have multiple warehouse rows for the same <code>product_id</code>. Only surrogate keys can distinguish them.</li>
+</ol>
+<p>In Lab 1 you will implement <strong>Type 1 SCDs</strong>, which use a single surrogate key per dimension member. Keep the <code>product_id</code> and <code>account_id</code> as <strong>natural key attributes</strong> in your dimension tables for traceability, but let the surrogate key be the primary key.</p>
+<p>In Snowflake, the simplest surrogate key approach is <code>IDENTITY</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>product_key <span class="dt">INTEGER</span> AUTOINCREMENT <span class="kw">PRIMARY</span> <span class="kw">KEY</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<hr>
+</section>
+</section>
+<section id="slowly-changing-dimensions-scd" class="level2">
+<h2 class="anchored" data-anchor-id="slowly-changing-dimensions-scd">5. Slowly Changing Dimensions (SCD)</h2>
+<p>Surrogate keys also enable something critical: handling dimension attributes that change over time. This is where the concept of Slowly Changing Dimensions comes in — and your choice of strategy determines what historical questions you can answer later.</p>
+<p>Dimension attributes change over time — a product moves to a new department, a customer changes industry. How you handle those changes determines what historical questions you can answer later. The textbook names several strategies; Lab 1 uses the two simplest.</p>
+<section id="scd-type-0-retain-original" class="level3">
+<h3 class="anchored" data-anchor-id="scd-type-0-retain-original">SCD Type 0 — Retain Original</h3>
+<p>The attribute <strong>never changes</strong> in the warehouse. Whatever value was loaded first is the value forever.</p>
+<p><strong>Use it when:</strong> The original value is the meaningful one — it represents a baseline or a point-in-time fact about the record. Textbook examples include a customer’s original credit score or a product’s launch date.</p>
+<blockquote class="blockquote">
+<p><em>“The dimension attribute value never changes, so facts are always grouped by this original value.”</em> — Kimball, Ch. 5</p>
+</blockquote>
+<p><strong>Implementation:</strong> No logic needed. Just don’t update it. If the source changes, you ignore the change.</p>
+<p><strong>In Lab 1:</strong> A product’s introduction date is a good candidate — once a product launched, that date is historically meaningful and should not be overwritten.</p>
+<hr>
+</section>
+<section id="scd-type-1-overwrite" class="level3">
+<h3 class="anchored" data-anchor-id="scd-type-1-overwrite">SCD Type 1 — Overwrite</h3>
+<p>The dimension row is <strong>updated in place</strong> with the new value. The old value is gone.</p>
+<p><strong>Use it when:</strong> History does not matter for this attribute. You only care about the current state, and old reports should reflect the current classification — even if that classification wasn’t true at the time.</p>
+<blockquote class="blockquote">
+<p><em>“You overwrite the old attribute value in the dimension row, replacing it with the current value; the attribute always reflects the most recent assignment.”</em> — Kimball, Ch. 5</p>
+</blockquote>
+<p><strong>Textbook example:</strong> A product called IntelliKidz originally belongs to the Education department. Later it moves to the Strategy department.</p>
+<p><em>Before the change:</em> | product_key | product_id | product_name | department | |—|—|—|—| | 12345 | ABC922-Z | IntelliKidz | Education |</p>
+<p><em>After a Type 1 update:</em> | product_key | product_id | product_name | department | |—|—|—|—| | 12345 | ABC922-Z | IntelliKidz | <strong>Strategy</strong> |</p>
+<p>The surrogate key (<code>12345</code>) does not change. The fact table does not change. But every historical fact row that references <code>product_key = 12345</code> now reports under <strong>Strategy</strong> — including sales from before the move. History is rewritten.</p>
+<p><strong>Implementation in Lab 1:</strong> Use <code>CREATE OR REPLACE TABLE</code> to reset the table, then reload it with a simple <code>INSERT INTO ... SELECT</code>. This is the clean-slate approach — straightforward and sufficient when you’re building the schema for the first time.</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Type 1 load pattern for Lab 1 — INSERT...SELECT after CREATE OR REPLACE TABLE</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> dim_product (product_id, product_name, product_family_name, is_active)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span> <span class="kw">id</span>, name, family, is_active</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> SNOWBEARAIR_DB.<span class="kw">PUBLIC</span>.product;</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<blockquote class="blockquote">
+<p><strong>Looking ahead:</strong> In Lab 2 you will upgrade this to a <code>MERGE INTO</code> statement — a production-grade pattern that handles new rows and updates without dropping the table. For now, INSERT…SELECT is the right starting point. See <code>merge_intro.md</code> for the full picture when you get there.</p>
+</blockquote>
+<p><strong>Key warning from the textbook:</strong> Type 1 looks easy but invalidates any pre-built aggregate tables and OLAP cubes that included the changed attribute. If you ever build aggregations on top of your star schema, a Type 1 change forces you to recompute them.</p>
+<hr>
+</section>
+<section id="why-not-type-2-yet" class="level3">
+<h3 class="anchored" data-anchor-id="why-not-type-2-yet">Why Not Type 2 Yet?</h3>
+<p>SCD <strong>Type 2</strong> (add a new row with a new surrogate key each time an attribute changes) is the “primary workhorse” for historical accuracy. It preserves full history and automatically partitions fact table records by the attribute values that were in effect at the time. Lab 1 doesn’t require it, but it is covered in Chapter 5 and will appear in later labs. The reason Lab 1 starts with Type 1 is that it is sufficient for most product and account attributes where “current state” is all that’s needed for analysis.</p>
+<hr>
+</section>
+</section>
+<section id="connecting-it-all-to-lab-1" class="level2">
+<h2 class="anchored" data-anchor-id="connecting-it-all-to-lab-1">6. Connecting It All to Lab 1</h2>
+<p>With those concepts in hand, let’s map them directly to what you’ll build today.</p>
+<p>Here is how these concepts map to what you will build:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 50%">
+<col style="width: 50%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Concept</th>
+<th>Lab 1 Application</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Business process</td>
+<td>A product sold on a Salesforce opportunity</td>
+</tr>
+<tr class="even">
+<td>Grain</td>
+<td>One row per opportunity line item</td>
+</tr>
+<tr class="odd">
+<td>Fact table</td>
+<td><code>fact_opportunity_line_item</code> (quantity, unit price, total price)</td>
+</tr>
+<tr class="even">
+<td>Dimensions</td>
+<td><code>dim_product</code>, <code>dim_account</code></td>
+</tr>
+<tr class="odd">
+<td>Surrogate key</td>
+<td><code>product_key AUTOINCREMENT</code>, <code>account_key AUTOINCREMENT</code></td>
+</tr>
+<tr class="even">
+<td>Natural key</td>
+<td><code>product_id</code>, <code>account_id</code> kept as attributes</td>
+</tr>
+<tr class="odd">
+<td>SCD Type 0</td>
+<td>Any attribute that reflects a permanent characteristic (e.g., product launch date)</td>
+</tr>
+<tr class="even">
+<td>SCD Type 1</td>
+<td>Product name, family, active flag, account industry, type — overwrite on change</td>
+</tr>
+</tbody>
+</table>
+<p>When you write the DDL for Task 2 (fact table), start with the dimensions first so the foreign keys you reference already exist. When you write the INSERT/MERGE statements to populate the tables, join the OLTP source tables through the dimension tables to look up surrogate keys — do not load natural keys into the fact table as foreign keys.</p>
+<hr>
+</section>
+<section id="quick-reference-scd-types-0-and-1" class="level2">
+<h2 class="anchored" data-anchor-id="quick-reference-scd-types-0-and-1">Quick Reference: SCD Types 0 and 1</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>Type 0</th>
+<th>Type 1</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>What happens</strong></td>
+<td>Nothing — original value is kept forever</td>
+<td>Dimension row is updated in place</td>
+</tr>
+<tr class="even">
+<td><strong>History preserved?</strong></td>
+<td>Yes — original is always there</td>
+<td>No — old value is overwritten and lost</td>
+</tr>
+<tr class="odd">
+<td><strong>New row created?</strong></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>Surrogate key changes?</strong></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="odd">
+<td><strong>Fact table touched?</strong></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr class="even">
+<td><strong>Aggregates affected?</strong></td>
+<td>No</td>
+<td>Yes — must be rebuilt</td>
+</tr>
+<tr class="odd">
+<td><strong>Good for</strong></td>
+<td>Baseline values, launch dates, durable identifiers</td>
+<td>Current-state attributes, classifications, active flags</td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
