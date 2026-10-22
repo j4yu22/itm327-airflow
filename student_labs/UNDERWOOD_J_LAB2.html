@@ -1,0 +1,2704 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UNDERWOOD_J_LAB2</title>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: #ffffff;
+    margin: 0;
+    padding: 24px;
+  }
+  .notebook { max-width: 1200px; margin: 0 auto; }
+
+  /* Header with title block and 3-dot menu */
+  .notebook-header { margin-bottom: 24px; }
+  .notebook-header-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+  .notebook-header-info { display: flex; flex-direction: column; }
+  .notebook-name-label { font-size: 13px; font-weight: 400; color: #1a1a1a; }
+  .notebook-title { font-size: 40px; font-weight: 600; margin: 0; color: #1a1a1a; overflow-wrap: break-word; }
+  .notebook-exported-at { font-size: 13px; font-weight: 400; color: #5d6a85; }
+  .notebook-header-divider { border: none; border-top: 1px solid #d5dae4; margin: 16px 0 0 0; }
+
+  /* Collapse/expand via data-collapse-state — always included so cells honour their
+     initial metadata (codeCollapsed / collapsed) even without interactive controls. */
+  .cell[data-collapse-state="collapsed"] .cell-header { border-radius: 0 0 8px 8px; }
+  .cell[data-collapse-state="collapsed"] .cell-outputs,
+  .cell[data-collapse-state="code-only"] .cell-outputs,
+  .cell[data-collapse-state="results-only"] .cell-input,
+  .cell[data-collapse-state="collapsed"] .cell-input { display: none; }
+  .cell[data-collapse-state="code-only"] .cell-input { border-radius: 0 0 8px 8px; }
+
+  /* Cell — matches in-app notebook cell styling */
+  .cell {
+    border: 1px solid #d5dae4;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    background: #fff;
+    position: relative;
+  }
+  .cell-input { border-radius: 0; overflow: hidden; }
+  .cell-outputs { border-radius: 0 0 8px 8px; overflow: hidden; }
+  .cell-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: #fff;
+    font-size: 12px;
+    height: 36px;
+    border-radius: 8px 8px 0 0;
+  }
+  .cell-badge {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5d6a85;
+  }
+  .cell-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+  .cell-name { font-weight: 500; color: #333; }
+  .cell-counter { color: #888; font-family: monospace; }
+
+  /* Code input area — gray background matching reusableBackgroundAdditionalInfo */
+  .cell-input {
+    background: #f7f7f7;
+    position: relative;
+  }
+  .cell-input::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 3px;
+    width: 3px;
+    height: 100%;
+    border-radius: 1px;
+    background: #d5dae4;
+  }
+  .cell-status-success::before { background: #0e9c73; }
+  .cell-status-error::before { background: #d3132f; }
+  .cell-source pre {
+    margin: 0;
+    padding: 12px 16px;
+    overflow-x: auto;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    white-space: pre;
+    color: #1a1a1a;
+  }
+
+  /*
+   * Syntax highlighting — .tok-* classes emitted by @lezer/highlight's
+   * classHighlighter + lezerTagHighlighter (same as the live CodeMirror
+   * editor). Colours resolve the --editor-* CSS variables from light.css.
+   */
+  .tok-comment              { color: #5d6a85; } /* --editor-comment          (gray-70)  */
+  .tok-controlKeyword       { color: #653e03; } /* --editor-control-keyword  (yellow-90) */
+  .tok-definitionKeyword    { color: #085bd7; } /* --editor-keyword          (blue-60)  */
+  .tok-keyword              { color: #9712e8; } /* --editor-py-keyword                  */
+  .tok-variableName         { color: #002c6e; } /* --editor-variable-name    (blue-90)  */
+  .tok-name                 { color: #191e24; } /* --editor-text             (gray-90)  */
+  .tok-functionName         { color: #653e03; } /* --editor-function-name    (yellow-90) */
+  .tok-number               { color: #087959; } /* --editor-number           (green-80) */
+  .tok-string, .tok-string2 { color: #860112; } /* --editor-string           (red-80)   */
+  .tok-typeName             { color: #087959; } /* --editor-type-name        (green-80) */
+  .tok-bool                 { color: #9712e8; } /* --editor-py-keyword                  */
+  .tok-null                 { color: #9712e8; } /* --editor-py-keyword                  */
+  .tok-operator             { color: #191e24; } /* --editor-text             (gray-90)  */
+  .tok-punctuation          { color: #191e24; } /* --editor-text             (gray-90)  */
+  .tok-self                 { color: #9712e8; } /* --editor-py-keyword                  */
+  .tok-builtin              { color: #085bd7; } /* --editor-keyword          (blue-60)  */
+  .tok-specialVariable      { color: #002c6e; } /* --editor-variable-name    (blue-90)  */
+
+  /* SQL theme overrides (sqlTheme.ts) — SQL keywords are blue, builtins/numbers
+     use --editor-function (green), and string2/specialVariable differ from Python. */
+  .cell-sql .tok-keyword        { color: #085bd7; } /* --editor-keyword          (blue-60)  */
+  .cell-sql .tok-builtin        { color: #087959; } /* --editor-function         (green-80) */
+  .cell-sql .tok-string2        { color: #087959; } /* --editor-function         (green-80) */
+  .cell-sql .tok-specialVariable { color: #653e03; } /* --editor-control-keyword  (yellow-90) */
+
+  /* Outputs — white background, visually distinct from gray code input */
+  .cell-outputs { background: #fff; border-top: 1px solid #d5dae4; }
+  /* Table/chart results already have their own top border via .rv-container;
+     class applied at render time to avoid :has() (unsupported in Firefox <121). */
+  .cell-outputs-no-top-border { border-top: none; }
+
+  /* Markdown rendered as inline content — no cell border, no badge */
+  .markdown-block {
+    padding: 4px 4px 4px 20px;
+    line-height: 1.6;
+    margin-bottom: 4px;
+    color: #1a1a1a;
+  }
+  .markdown-block h1,.markdown-block h2,.markdown-block h3,
+  .markdown-block h4,.markdown-block h5,.markdown-block h6 {
+    margin-top: 16px; margin-bottom: 8px; font-weight: 600;
+  }
+  .markdown-block p { margin: 0 0 10px; }
+  .markdown-block code {
+    background: #f0f0f0; padding: 1px 4px; border-radius: 3px;
+    font-family: monospace; font-size: 12px;
+  }
+  .markdown-block pre {
+    background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;
+  }
+  .markdown-block blockquote {
+    border-left: 3px solid #ccc; margin: 0 0 10px; padding: 4px 12px; color: #555;
+  }
+  .markdown-block table { border-collapse: collapse; margin-bottom: 10px; }
+  .markdown-block th, .markdown-block td {
+    border: 1px solid #ddd; padding: 6px 10px;
+  }
+  .markdown-block th { background: #f5f5f5; font-weight: 600; }
+
+  .output-text {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 0;
+    padding: 10px 16px;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+  .output-stderr { }
+  .output-error  { padding: 10px 16px; }
+  .output-sql-error { color: #5d6a85; padding: 10px 16px; } /* gray-70 — matches --editor-comment */
+
+  .output-markdown  { padding: 10px 16px; }
+  .output-html      { padding: 10px 16px; }
+  .output-json {
+    font-family: monospace; font-size: 13px; line-height: 1.45;
+    margin: 0; padding: 10px 16px; overflow-x: auto;
+    background: #fafafa; white-space: pre;
+  }
+  .output-image { padding: 10px 16px; }
+  .output-image img { display: block; }
+  .output-audio { padding: 10px 16px; }
+  .output-audio audio { max-width: 100%; width: 500px; }
+
+  /* Results Viewer: Tab toggle */
+  .rv-container { border-top: 1px solid #e0e0e0; }
+  .rv-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 8px;
+    background: #f7f7f7;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .rv-tab {
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .rv-tab:hover { color: #1a1a1a; }
+  .rv-tab-active {
+    color: #0969da;
+    border-bottom-color: #0969da;
+  }
+  .rv-panel-hidden { display: none; }
+
+  /* Data grid (interactive scrollable table) */
+  .dg-container { background: #fff; }
+  .dg-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: #666;
+    background: #f9f9f9;
+    border-bottom: 1px solid #e8e8e8;
+    position: relative;
+    z-index: 5;
+  }
+  .dg-row-count { font-weight: 500; flex-shrink: 0; }
+  .dg-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    flex-shrink: 1;
+    min-width: 0;
+    justify-content: flex-end;
+  }
+
+  /* Search control — collapsed icon that expands on hover (matches SearchControl.tsx) */
+  .dg-search {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 24px;
+    width: 24px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: transparent;
+    transition: width 200ms ease, background-color 200ms ease, box-shadow 300ms ease;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .dg-search-expanded {
+    width: 250px;
+    background: #e8e8e8;
+    padding: 0 8px;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+  .dg-search-expanded:focus-within {
+    box-shadow: 0 0 0 2px #0969da;
+  }
+  .dg-search-icon {
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    color: #333;
+    flex-shrink: 0;
+  }
+  .dg-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 12px;
+    color: #222;
+    padding: 0;
+    height: 100%;
+    display: none;
+  }
+  .dg-search-expanded .dg-search-input { display: block; }
+  .dg-search-input::placeholder { color: #888; }
+  .dg-search-clear {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #555;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dg-search-expanded .dg-search-clear { display: flex; }
+  .dg-search-clear:hover { color: #111; background: rgba(0,0,0,0.08); }
+  .dg-search-clear svg { width: 14px; height: 14px; }
+
+  .dg-search:not(.dg-search-expanded):hover { background: #e8e8e8; }
+
+  /* Column selection button — icon-only tertiary button (matches BottomPaneIconButton) */
+  .dg-colsel-wrapper { position: relative; }
+  .dg-colsel-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #555;
+    border-radius: 6px;
+  }
+  .dg-colsel-btn:hover { background: #e8e8e8; color: #222; }
+  .dg-colsel-btn svg { width: 16px; height: 16px; }
+
+  /* Column selection popover (matches ColumnSelectionPopover.tsx) */
+  .dg-colsel-popover[hidden] { display: none !important; }
+  .dg-colsel-popover {
+    position: fixed;
+    z-index: 1000;
+    width: 240px;
+    background: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.16);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .dg-colsel-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .dg-colsel-search-icon {
+    position: absolute;
+    left: 8px;
+    width: 14px;
+    height: 14px;
+    color: #888;
+    pointer-events: none;
+  }
+  .dg-colsel-search-input {
+    width: 100%;
+    height: 30px;
+    padding: 4px 8px 4px 28px;
+    font-size: 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    outline: none;
+    background: #f5f5f5;
+    color: #222;
+  }
+  .dg-colsel-search-input:focus { border-color: #0969da; background: #fff; }
+  .dg-colsel-search-input::placeholder { color: #888; }
+  .dg-colsel-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+  }
+  .dg-colsel-item:hover { color: #111; }
+  .dg-colsel-item input { accent-color: #0969da; margin: 0; flex-shrink: 0; width: 14px; height: 14px; }
+  .dg-colsel-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dg-colsel-all { font-weight: 500; }
+  .dg-colsel-sep { height: 1px; background: #e0e0e0; margin: 0; }
+  .dg-colsel-list { max-height: 320px; overflow-y: auto; display: flex; flex-direction: column; }
+  .dg-colsel-apply {
+    width: 100%;
+    height: 32px;
+    border: none;
+    border-radius: 6px;
+    background: #0969da;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .dg-colsel-apply:hover { background: #0758b6; }
+  .dg-colsel-apply:disabled { background: #a0cfff; cursor: default; }
+  .dg-colsel-empty { font-size: 12px; color: #888; text-align: center; padding: 12px 0; }
+  .dg-colsel-empty[hidden] { display: none; }
+  .dg-scroll {
+    overflow: auto;
+    position: relative;
+    min-height: 120px;
+  }
+  .dg-search-empty {
+    padding: 48px 16px;
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .dg-search-empty[hidden] { display: none; }
+  .dg-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    min-width: 100%;
+    table-layout: auto;
+  }
+  .dg-table thead { position: sticky; top: 0; z-index: 2; }
+  .dg-table th {
+    background: #f5f5f5;
+    border-bottom: 2px solid #d0d0d0;
+    border-right: 1px solid #e8e8e8;
+    padding: 0 4px 0 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: left;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12px;
+    color: #333;
+    height: 36px;
+  }
+  .dg-col-header {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 100%;
+  }
+  .dg-col-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dg-sort-arrow { font-size: 10px; color: #0969da; flex-shrink: 0; }
+  .dg-col-menu-btn {
+    flex-shrink: 0;
+    opacity: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 15px;
+    color: #555;
+    line-height: 1;
+    border-radius: 3px;
+  }
+  th:hover .dg-col-menu-btn { opacity: 1; }
+  .dg-col-menu-btn:hover { background: #e0e0e0; color: #111; }
+  .dg-col-menu {
+    position: fixed;
+    background: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.14);
+    z-index: 1000;
+    min-width: 160px;
+    padding: 4px;
+  }
+  .dg-col-menu-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 7px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: #222;
+    border-radius: 4px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .dg-col-menu-item:hover { background: #f0f7ff; }
+  .dg-col-menu-item.dg-active { background: #e8f0fe; color: #0969da; font-weight: 500; }
+  .dg-col-menu-item.dg-active:hover { background: #d4e4fc; }
+  .dg-col-menu-sep { height: 1px; background: #e8e8e8; margin: 4px 0; }
+  .dg-submenu-header { display: flex; justify-content: space-between; align-items: center; }
+  .dg-submenu-arrow { font-size: 9px; color: #888; margin-left: 4px; }
+  .dg-submenu-list { border-left: 2px solid #e0e8f8; margin-left: 8px; }
+  .dg-submenu-item { padding-left: 12px !important; font-size: 11.5px; color: #444; }
+  .dg-stats-row th {
+    background: #f0f7ff;
+    font-weight: 400;
+    font-size: 11px;
+    color: #555;
+    padding: 3px 12px;
+    border-bottom: 1px solid #c8daf8;
+    white-space: nowrap;
+  }
+  .dg-stats-row .dg-row-num { background: #f0f7ff !important; }
+  .dg-table td {
+    border-bottom: 1px solid #eee;
+    border-right: 1px solid #f0f0f0;
+    padding: 0 12px;
+    height: 28px;
+    color: #1a1a1a;
+  }
+  .dg-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .dg-table tr:hover td { background: #f0f7ff; }
+  .dg-table tr:nth-child(even) td { background: #fafafa; }
+  .dg-table tr:nth-child(even):hover td { background: #f0f7ff; }
+  .dg-row-num {
+    color: #999;
+    text-align: right;
+    padding: 4px 8px !important;
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    font-size: 11px;
+    user-select: none;
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: #f9f9f9 !important;
+    border-right: 1px solid #e0e0e0 !important;
+  }
+  th.dg-row-num {
+    background: #f5f5f5 !important;
+    z-index: 3;
+  }
+
+  /* Charts */
+  .output-vega  { padding: 10px 16px; }
+  .output-plotly { padding: 10px 16px; min-height: 400px; }
+
+  /* Query placeholder */
+  .output-query-placeholder {
+    padding: 10px 16px;
+    color: #888;
+    font-style: italic;
+    font-size: 13px;
+    border-top: 1px dashed #e0e0e0;
+  }
+  .output-warning {
+    padding: 8px 16px;
+    background: #fffbeb;
+    color: #92400e;
+    border-left: 3px solid #f59e0b;
+    font-size: 13px;
+    margin: 4px 0;
+  }
+  .output-other { padding: 10px 16px; color: #888; font-style: italic; font-size: 13px; }
+
+  /* Chart editor (left sidebar + chart area) */
+  .ch-layout {
+    display: flex;
+    min-height: 340px;
+    background: #fff;
+  }
+  .ch-sidebar {
+    width: 220px;
+    min-width: 220px;
+    flex-shrink: 0;
+    border-right: 1px solid #e0e0e0;
+    background: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 10px;
+    overflow-y: auto;
+  }
+  .ch-form { display: flex; flex-direction: column; gap: 6px; }
+  .ch-field-row { display: flex; align-items: center; gap: 6px; }
+  .ch-label {
+    width: 72px;
+    min-width: 72px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #555;
+    flex-shrink: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .ch-select {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 4px;
+    padding: 4px 4px;
+    background: #fff;
+    color: #222;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .ch-divider { height: 1px; background: #e8e8e8; margin: 2px 0; }
+
+  /* Multi-Y axis select: stacked dropdowns + Add column button */
+  .ch-multi-y { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+  .ch-multi-y-item { display: flex; align-items: center; gap: 4px; }
+  .ch-multi-y-item .ch-select { flex: 1; min-width: 0; }
+  .ch-remove-btn {
+    background: none; border: none; cursor: pointer; color: #888;
+    font-size: 12px; padding: 2px 4px; border-radius: 3px; line-height: 1; flex-shrink: 0;
+  }
+  .ch-remove-btn:hover { background: #eee; color: #333; }
+  .ch-add-col-wrapper { position: relative; }
+  .ch-add-col-btn {
+    background: none; border: 1px dashed #ccc; border-radius: 4px;
+    font-size: 11px; color: #555; cursor: pointer; padding: 3px 8px; width: 100%;
+    text-align: left;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .ch-add-col-btn:hover { border-color: #999; background: #f5f5f5; }
+  .ch-add-col-menu {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 10;
+    background: #fff; border: 1px solid #d0d0d0; border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12); max-height: 200px; overflow-y: auto;
+    margin-top: 2px;
+  }
+  .ch-add-col-header {
+    font-size: 10px; font-weight: 600; color: #888; padding: 6px 8px 2px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .ch-add-col-item {
+    display: block; width: 100%; background: none; border: none; text-align: left;
+    font-size: 12px; padding: 5px 8px; cursor: pointer; color: #222;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .ch-add-col-item:hover { background: #f0f4ff; }
+
+  /* Toggle switch for axis labels */
+  .ch-toggle-row { align-items: flex-start; }
+  .ch-toggle-right { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
+  .ch-toggle {
+    position: relative; width: 32px; height: 18px; border-radius: 9px;
+    background: #ccc; border: none; cursor: pointer; padding: 0; flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  .ch-toggle.ch-toggle-on { background: #0078d4; }
+  .ch-toggle-knob {
+    position: absolute; top: 2px; left: 2px; width: 14px; height: 14px;
+    border-radius: 50%; background: #fff; transition: left 0.15s;
+  }
+  .ch-toggle.ch-toggle-on .ch-toggle-knob { left: 16px; }
+  .ch-text-input {
+    font-size: 12px; border: 1px solid #d0d0d0; border-radius: 4px;
+    padding: 4px 6px; width: 100%; background: #fff; color: #222;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+  .ch-text-input::placeholder { color: #aaa; }
+
+  .ch-area {
+    flex: 1;
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 8px 4px;
+  }
+  .ch-area > div { width: 100%; }
+
+  /*
+   * ANSI colour classes emitted by ansi_up (use_classes=true).
+   * Class names use the -fg suffix (e.g. ansi-red-fg).
+   * Hex values are the resolved light-mode Balto base-color tokens matching
+   * the --editor-* mappings in NotebookResults.css so the export looks
+   * consistent with the in-app rendering.
+   *
+   *   red/bright-red         → --editor-string          → base-color-red-80     #860112
+   *   green/bright-green     → --editor-function         → base-color-green-80   #087959
+   *   yellow/bright-yellow   → --editor-control-keyword  → base-color-yellow-90  #653e03
+   *   blue/bright-blue       → --editor-keyword          → base-color-blue-60    #085bd7
+   *   magenta/bright-magenta → --editor-py-keyword       →                       #9712e8
+   *   cyan/bright-cyan       → --editor-variable-name    → base-color-blue-90    #002c6e
+   *   black/bright-black     → --editor-comment          → base-color-gray-70    #5d6a85
+   *   white/bright-white     → --editor-text             → base-color-gray-90    #191e24
+   */
+  .ansi-black-fg, .ansi-bright-black-fg   { color: #5d6a85; }
+  .ansi-red-fg, .ansi-bright-red-fg       { color: #860112; }
+  .ansi-green-fg, .ansi-bright-green-fg   { color: #087959; }
+  .ansi-yellow-fg, .ansi-bright-yellow-fg { color: #653e03; }
+  .ansi-blue-fg, .ansi-bright-blue-fg     { color: #085bd7; }
+  .ansi-magenta-fg, .ansi-bright-magenta-fg { color: #9712e8; }
+  .ansi-cyan-fg, .ansi-bright-cyan-fg     { color: #002c6e; }
+  .ansi-white-fg, .ansi-bright-white-fg   { color: #191e24; }
+  .ansi-yellow-bg { background-color: #fff8e6; }
+  .ansi-bold { font-weight: bold; }
+</style>
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+<symbol id="icon-search" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M7 2a5 5 0 0 1 3.871 8.164l3.983 3.983-.707.707-3.983-3.983A5 5 0 1 1 7 2m0 1a4 4 0 1 0 0 8 4 4 0 0 0 0-8" clip-rule="evenodd"/></symbol>
+<symbol id="icon-clear-fill" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1m0 6.293L5.354 4.646l-.708.708L7.293 8l-2.647 2.646.708.707L8 8.708l2.646 2.646.707-.707L8.708 8l2.646-2.646-.707-.708z" clip-rule="evenodd"/></symbol>
+<symbol id="icon-col-filter" viewBox="0 0 16 16"><path d="M6.5 2a.5.5 0 0 1 .5.5V4H6V3H3v10h3v-3h1v3.5a.5.5 0 0 1-.5.5h-4l-.1-.01a.5.5 0 0 1-.4-.49v-11a.5.5 0 0 1 .5-.5z"/><path fill-rule="evenodd" d="M14.972 5a.5.5 0 0 1 .393.809L12 10.09v3.41a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-3.41L5.636 5.809A.5.5 0 0 1 6.029 5zM9.786 9.472a1 1 0 0 1 .214.618V13h1v-2.91a1 1 0 0 1 .214-.617L13.944 6H7.057z" clip-rule="evenodd"/></symbol>
+<symbol id="icon-lang-python" viewBox="0 0 16 16"><path d="M3 12.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V12h1v.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5V12h1z"/><path fill-rule="evenodd" d="M5.75 5.113q.593 0 1.04.242.444.24.69.672.25.435.25 1.012v.008q0 .582-.25 1.016a1.7 1.7 0 0 1-.69.671 2.2 2.2 0 0 1-1.04.239H4.605v1.777h-1.18V5.113zM4.605 8.051h.856q.508 0 .789-.258.285-.262.285-.742v-.008q0-.48-.285-.738-.28-.258-.79-.258h-.855z" clip-rule="evenodd"/><path d="M10.395 7.484h.07l1.238-2.37h1.277l-1.964 3.53v2.106h-1.18V8.645L7.875 5.113h1.277zM12.5 2A1.5 1.5 0 0 1 14 3.5V4h-1v-.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5V4H2v-.5A1.5 1.5 0 0 1 3.5 2z"/></symbol>
+<symbol id="icon-lang-sql" viewBox="0 0 16 16"><path d="M3 12.5a.5.5 0 0 0 .5.5h9a.5.5 0 0 0 .5-.5V12h1v.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 12.5V12h1z"/><path fill-rule="evenodd" d="M8.534 5.441q.728 0 1.258.315.533.315.823.895.291.582.291 1.378v.007q0 .796-.29 1.377a2.15 2.15 0 0 1-.535.691l.664.885h-.96l-.376-.5a2.7 2.7 0 0 1-.875.138q-.732 0-1.264-.315a2.13 2.13 0 0 1-.825-.899q-.287-.58-.287-1.377V8.03q0-.8.291-1.378.294-.581.827-.895.534-.315 1.258-.315m0 .875q-.4 0-.697.212a1.35 1.35 0 0 0-.462.595 2.3 2.3 0 0 0-.164.906v.007q0 .52.161.905.164.387.458.599.297.212.704.212c.104 0 .2-.016.294-.037L8.2 8.877h.96l.319.425q.124-.156.211-.36.164-.387.165-.906V8.03q0-.522-.165-.906a1.33 1.33 0 0 0-.458-.595 1.17 1.17 0 0 0-.697-.212" clip-rule="evenodd"/><path d="M3.687 5.441q.573 0 .984.189.414.184.646.509.233.322.263.735l.004.044h-.97l-.008-.041a.6.6 0 0 0-.15-.31.8.8 0 0 0-.314-.21 1.2 1.2 0 0 0-.455-.078q-.253 0-.445.075a.7.7 0 0 0-.297.212.5.5 0 0 0-.106.318v.004q0 .239.191.392.195.15.63.24l.523.106q.523.105.85.287.332.18.49.454t.157.66v.003q0 .49-.243.848-.24.356-.687.554-.445.195-1.06.195a2.7 2.7 0 0 1-1.022-.178 1.6 1.6 0 0 1-.684-.499 1.4 1.4 0 0 1-.276-.762l-.004-.055H2.7l.003.034a.56.56 0 0 0 .15.325.9.9 0 0 0 .356.215q.222.079.51.08.276 0 .485-.083a.8.8 0 0 0 .324-.225q.12-.147.12-.335V9.14a.46.46 0 0 0-.198-.39q-.195-.147-.656-.242l-.52-.107q-.768-.156-1.118-.515-.348-.36-.348-.92v-.003q0-.458.243-.8.242-.342.666-.53.423-.192.97-.192m8.952 4.209h2.194v.85h-3.227V5.568h1.033zM12.5 2A1.5 1.5 0 0 1 14 3.5V4h-1v-.5a.5.5 0 0 0-.5-.5h-9a.5.5 0 0 0-.5.5V4H2v-.5A1.5 1.5 0 0 1 3.5 2z"/></symbol>
+</svg>
+  <div id="dg-col-menu" class="dg-col-menu" hidden></div>
+  <div class="notebook">
+    <div class="notebook-header">
+      <div class="notebook-header-top">
+        <div class="notebook-header-info">
+          <span class="notebook-name-label">Notebook name</span>
+          <h1 class="notebook-title">UNDERWOOD_J_LAB2</h1>
+          <span class="notebook-exported-at">Exported at 04:41 PM MDT on October 21, 2026</span>
+        </div>
+        
+      </div>
+      <hr class="notebook-header-divider" />
+    </div>
+    <div class="markdown-wrapper">
+  <div class="markdown-block"><h1 id="underwood_j_lab2">UNDERWOOD_J_LAB2</h1>
+<h2 id="conformed-date--time-dimensions-and-slowly-changing-dimensions">Conformed Date &amp; Time Dimensions and Slowly Changing Dimensions</h2>
+<p>This notebook extends the Lab 1 tables in <code>SNOWBEARAIR_DB.MODELED</code>. It keeps the existing Lab 1 column names, including <code>ACCOUNT_BILLING_COUNT</code>, which stores billing country. The calendar covers 2015–2030, fiscal years follow January–December, and business hours are 9:00 AM–4:59 PM.</p>
+<p>Run all cells for the initial rebuild. For later daily updates, run the account and product MERGE cells without rerunning the DDL, which would reset their history. Account history uses daily snapshots; the initial source profile is assumed valid from its creation date.</p>
+</div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h2 id="setup">Setup</h2>
+<p>Run this cell first before anything else.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="3" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">setup</span><span class="cell-counter">[1]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql">USE DATABASE SNOWBEARAIR_DB;
+USE <span class="tok-keyword">SCHEMA</span> MODELED;
+USE WAREHOUSE STUDENT_WH;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Statement executed successfully.">Statement executed successfully.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h1 id="part-1-design--create-the-new-and-updated-tables">Part 1: Design — Create the New and Updated Tables</h1>
+<p><strong>Build order:</strong></p>
+<ol>
+<li><code>dim_date</code> (no dependencies)</li>
+<li><code>dim_time</code> (no dependencies)</li>
+<li><code>dim_account</code> — rebuild with Type 2 columns</li>
+<li><code>dim_product</code> — rebuild with Type 3 column</li>
+<li><code>fact_opportunity_line_item</code> — rebuild with date/time foreign keys</li>
+</ol>
+</div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="task-1-create-dim_date">Task 1: Create dim_date</h3>
+<p>Create <code>dim_date_underwood_j</code></p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li><code>date_key</code> as INTEGER — formatted as <code>YYYYMMDD</code> (e.g., <code>20240315</code> for March 15 2024). <strong>Do not use AUTOINCREMENT</strong> — the date itself is the key.</li>
+<li>One row per calendar date, covering at least 2015–2025</li>
+<li>At least 20 descriptive attributes (see the list in <code>lab2.md</code>)</li>
+<li><strong>SCD Type 0</strong> — rows are never updated once inserted</li>
+</ul>
+<p><strong>Tip:</strong> dim_date is populated by <em>generating</em> rows, not by querying Salesforce.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="6" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">task1_dim_date</span><span class="cell-counter">[2]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Task 1: Create dim_date_underwood_j</span>
+<span class="tok-keyword">CREATE</span> <span class="tok-keyword">OR</span> REPLACE <span class="tok-keyword">TABLE</span> dim_date_underwood_j <span class="tok-punctuation">(</span>
+    date_key              <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">PRIMARY</span> <span class="tok-keyword">KEY</span><span class="tok-punctuation">,</span>
+    calendar_date         <span class="tok-typeName">DATE</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    day_number_in_month   <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    day_name              <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">9</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    day_of_week_number    <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    week_number           <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    month_number          <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    month_name            <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">9</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    quarter               <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">year</span>                  <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    fiscal_month          <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    fiscal_quarter        <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    fiscal_year           <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    is_weekend_flag       <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    is_weekday_flag       <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    month_start_flag      <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    month_end_flag        <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    quarter_start_flag    <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    quarter_end_flag      <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    year_start_flag       <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    year_end_flag         <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    day_of_year           <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    iso_week_year         <span class="tok-typeName">INTEGER</span>
+<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Table DIM_DATE_UNDERWOOD_J successfully created.">Table DIM_DATE_UNDERWOOD_J successfully created.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="task-2-create-dim_time">Task 2: Create dim_time</h3>
+<p>Create <code>dim_time_underwood_j</code></p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li><code>time_key</code> as INTEGER — formatted as <code>HHMM</code> (e.g., <code>1430</code> for 2:30 PM)</li>
+<li>One row per minute of the day (1,440 rows total)</li>
+<li>Required attributes: <code>hour_value</code>, <code>minute_value</code>, <code>second_value</code>, <code>am_pm_indicator</code>, <code>business_hours_flag</code></li>
+</ul>
+</div>
+</div>
+<div class="cell cell-sql" data-index="8" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">task2_dim_time</span><span class="cell-counter">[3]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Task 2: Create dim_time_underwood_j</span>
+<span class="tok-keyword">CREATE</span> <span class="tok-keyword">OR</span> REPLACE <span class="tok-keyword">TABLE</span> dim_time_underwood_j <span class="tok-punctuation">(</span>
+    time_key              <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">PRIMARY</span> <span class="tok-keyword">KEY</span><span class="tok-punctuation">,</span>
+    hour_value            <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    minute_value          <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    second_value          <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    am_pm_indicator       <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">2</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    business_hours_flag   <span class="tok-typeName">BOOLEAN</span>
+<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Table DIM_TIME_UNDERWOOD_J successfully created.">Table DIM_TIME_UNDERWOOD_J successfully created.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="task-3-upgrade-dim_account-to-scd-type-2">Task 3: Upgrade dim_account to SCD Type 2</h3>
+<p>Rebuild <code>dim_account_underwood_j</code> with full historical tracking.</p>
+<p><strong>Add these three administrative columns to your Lab 1 structure:</strong></p>
+<ul>
+<li><code>effective_start_date DATE</code> — first date this row's profile was valid</li>
+<li><code>effective_end_date DATE</code> — last date valid; use <code>'9999-12-31'</code> for the current row (avoid NULLs)</li>
+<li><code>current_flag BOOLEAN</code> — <code>TRUE</code> for the one active row per account</li>
+</ul>
+<p>Use <code>CREATE OR REPLACE TABLE</code> — do not ALTER the Lab 1 table.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="10" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">task3_dim_account_type2</span><span class="cell-counter">[4]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Task 3: Preserve the Lab 1 attributes and add Type 2 history</span>
+<span class="tok-keyword">CREATE</span> <span class="tok-keyword">OR</span> REPLACE <span class="tok-keyword">TABLE</span> dim_account_underwood_j <span class="tok-punctuation">(</span>
+    account_key                 <span class="tok-typeName">INTEGER</span> AUTOINCREMENT <span class="tok-keyword">PRIMARY</span> <span class="tok-keyword">KEY</span><span class="tok-punctuation">,</span>
+    account_id                  <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">255</span><span class="tok-punctuation">)</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    account_name                <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">255</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    account_type                <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">50</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    account_industry            <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">100</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    account_billing_state       <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">100</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    account_billing_count       <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">100</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    account_annual_revenue      NUMBER<span class="tok-punctuation">(</span><span class="tok-number">18</span><span class="tok-punctuation">,</span><span class="tok-number">2</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    account_number_of_employees <span class="tok-typeName">INTEGER</span><span class="tok-punctuation">,</span>
+    account_created_date        <span class="tok-typeName">DATE</span><span class="tok-punctuation">,</span>
+    effective_start_date        <span class="tok-typeName">DATE</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    effective_end_date          <span class="tok-typeName">DATE</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span> <span class="tok-keyword">DEFAULT</span> <span class="tok-string">&#x27;9999-12-31&#x27;</span><span class="tok-specialVariable">::DATE</span><span class="tok-punctuation">,</span>
+    current_flag                <span class="tok-typeName">BOOLEAN</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span> <span class="tok-keyword">DEFAULT</span> <span class="tok-bool">TRUE</span>
+<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Table DIM_ACCOUNT_UNDERWOOD_J successfully created.">Table DIM_ACCOUNT_UNDERWOOD_J successfully created.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="task-4-upgrade-dim_product-to-scd-type-3">Task 4: Upgrade dim_product to SCD Type 3</h3>
+<p>Rebuild <code>dim_product_underwood_j</code> to track current and prior product family.</p>
+<p><strong>Add one column:</strong></p>
+<ul>
+<li><code>prior_product_family_name VARCHAR(100)</code> — the family before the most recent reclassification</li>
+</ul>
+<p>All other attributes continue using Type 1 behavior (overwrite on change).</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="12" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">task4_dim_product_type3</span><span class="cell-counter">[5]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Task 4: Keep current product_family and add the prior family</span>
+<span class="tok-keyword">CREATE</span> <span class="tok-keyword">OR</span> REPLACE <span class="tok-keyword">TABLE</span> dim_product_underwood_j <span class="tok-punctuation">(</span>
+    product_key               <span class="tok-typeName">INTEGER</span> AUTOINCREMENT <span class="tok-keyword">PRIMARY</span> <span class="tok-keyword">KEY</span><span class="tok-punctuation">,</span>
+    product_id                <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">255</span><span class="tok-punctuation">)</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    product_name              <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">255</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    product_code              <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">255</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    product_family            <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">255</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    product_is_active         <span class="tok-typeName">BOOLEAN</span><span class="tok-punctuation">,</span>
+    prior_product_family_name <span class="tok-typeName">VARCHAR</span><span class="tok-punctuation">(</span><span class="tok-number">100</span><span class="tok-punctuation">)</span>
+<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Table DIM_PRODUCT_UNDERWOOD_J successfully created.">Table DIM_PRODUCT_UNDERWOOD_J successfully created.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="task-5-refactor-the-fact-table">Task 5: Refactor the Fact Table</h3>
+<p>Rebuild <code>fact_opportunity_line_item_underwood_j</code> with role-playing date keys.</p>
+<p><strong>Requirements:</strong></p>
+<ul>
+<li>Remove any raw DATE/TIMESTAMP columns</li>
+<li>Add <code>created_date_key</code> and <code>close_date_key</code> — both reference <code>dim_date_underwood_j</code> (role-playing)</li>
+<li>Add <code>created_time_key</code> — references <code>dim_time_underwood_j</code></li>
+<li>Keep all existing FKs and measures from Lab 1</li>
+</ul>
+<p><strong>Role-playing reminder:</strong> You are NOT creating two separate date tables. Both date keys point to the same <code>dim_date_underwood_j</code> table — just with different column names.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="14" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">task5_fact_refactor</span><span class="cell-counter">[6]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Task 5: One row per opportunity line item, with date/time keys</span>
+<span class="tok-keyword">CREATE</span> <span class="tok-keyword">OR</span> REPLACE <span class="tok-keyword">TABLE</span> fact_opportunity_line_item_underwood_j <span class="tok-punctuation">(</span>
+    line_item_key         <span class="tok-typeName">INTEGER</span> AUTOINCREMENT <span class="tok-keyword">PRIMARY</span> <span class="tok-keyword">KEY</span><span class="tok-punctuation">,</span>
+    product_key           <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    account_key           <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    opportunity_key       <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    created_date_key      <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    close_date_key        <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    created_time_key      <span class="tok-typeName">INTEGER</span> <span class="tok-keyword">NOT</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span>
+    line_item_quantity    NUMBER<span class="tok-punctuation">(</span><span class="tok-number">18</span><span class="tok-punctuation">,</span><span class="tok-number">2</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    line_item_unit_price  NUMBER<span class="tok-punctuation">(</span><span class="tok-number">18</span><span class="tok-punctuation">,</span><span class="tok-number">2</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    line_item_total_price NUMBER<span class="tok-punctuation">(</span><span class="tok-number">18</span><span class="tok-punctuation">,</span><span class="tok-number">2</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">FOREIGN</span> <span class="tok-keyword">KEY</span> <span class="tok-punctuation">(</span>product_key<span class="tok-punctuation">)</span> <span class="tok-keyword">REFERENCES</span> dim_product_underwood_j<span class="tok-punctuation">(</span>product_key<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">FOREIGN</span> <span class="tok-keyword">KEY</span> <span class="tok-punctuation">(</span>account_key<span class="tok-punctuation">)</span> <span class="tok-keyword">REFERENCES</span> dim_account_underwood_j<span class="tok-punctuation">(</span>account_key<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">FOREIGN</span> <span class="tok-keyword">KEY</span> <span class="tok-punctuation">(</span>opportunity_key<span class="tok-punctuation">)</span> <span class="tok-keyword">REFERENCES</span> dim_opportunity_underwood_j<span class="tok-punctuation">(</span>opportunity_key<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">FOREIGN</span> <span class="tok-keyword">KEY</span> <span class="tok-punctuation">(</span>created_date_key<span class="tok-punctuation">)</span> <span class="tok-keyword">REFERENCES</span> dim_date_underwood_j<span class="tok-punctuation">(</span>date_key<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">FOREIGN</span> <span class="tok-keyword">KEY</span> <span class="tok-punctuation">(</span>close_date_key<span class="tok-punctuation">)</span> <span class="tok-keyword">REFERENCES</span> dim_date_underwood_j<span class="tok-punctuation">(</span>date_key<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">FOREIGN</span> <span class="tok-keyword">KEY</span> <span class="tok-punctuation">(</span>created_time_key<span class="tok-punctuation">)</span> <span class="tok-keyword">REFERENCES</span> dim_time_underwood_j<span class="tok-punctuation">(</span>time_key<span class="tok-punctuation">)</span>
+<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Table FACT_OPPORTUNITY_LINE_ITEM_UNDERWOOD_J successfully created.">Table FACT_OPPORTUNITY_LINE_ITEM_UNDERWOOD_J successfully created.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h1 id="part-2-load-data">Part 2: Load Data</h1>
+<p><strong>Load order:</strong> date → time → account → product → fact</p>
+<p><code>dim_date</code> and <code>dim_time</code> are generated from scratch — not queried from Salesforce.
+<code>dim_account</code> and <code>dim_product</code> are reloaded from <code>SNOWBEARAIR_DB.PUBLIC</code> with new columns.
+The fact table must be reloaded with joins to the date dimension to resolve date keys.</p>
+</div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="load-dim_date">Load dim_date</h3>
+<p>Generate rows using Snowflake's <code>GENERATOR</code> function — do <strong>not</strong> query from Salesforce.</p>
+<p>See <code>dim_date_intro.md</code> for the <code>GENERATOR</code> + <code>SEQ4()</code> + <code>DATEADD</code> pattern and tips for calculating each attribute.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="17" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">load_dim_date</span><span class="cell-counter">[7]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- 5,844 consecutive dates: January 1, 2015 through December 31, 2030</span>
+<span class="tok-comment">-- ROW_NUMBER avoids possible gaps in SEQ4(). Fiscal year = calendar year.</span>
+<span class="tok-keyword">INSERT</span> <span class="tok-keyword">INTO</span> dim_date_underwood_j <span class="tok-punctuation">(</span>
+    date_key<span class="tok-punctuation">,</span> calendar_date<span class="tok-punctuation">,</span> day_number_in_month<span class="tok-punctuation">,</span> day_name<span class="tok-punctuation">,</span>
+    day_of_week_number<span class="tok-punctuation">,</span> week_number<span class="tok-punctuation">,</span> month_number<span class="tok-punctuation">,</span> month_name<span class="tok-punctuation">,</span>
+    quarter<span class="tok-punctuation">,</span> <span class="tok-keyword">year</span><span class="tok-punctuation">,</span> fiscal_month<span class="tok-punctuation">,</span> fiscal_quarter<span class="tok-punctuation">,</span> fiscal_year<span class="tok-punctuation">,</span>
+    is_weekend_flag<span class="tok-punctuation">,</span> is_weekday_flag<span class="tok-punctuation">,</span> month_start_flag<span class="tok-punctuation">,</span> month_end_flag<span class="tok-punctuation">,</span>
+    quarter_start_flag<span class="tok-punctuation">,</span> quarter_end_flag<span class="tok-punctuation">,</span> year_start_flag<span class="tok-punctuation">,</span> year_end_flag<span class="tok-punctuation">,</span>
+    day_of_year<span class="tok-punctuation">,</span> iso_week_year
+<span class="tok-punctuation">)</span>
+<span class="tok-keyword">WITH</span> date_spine <span class="tok-keyword">AS</span> <span class="tok-punctuation">(</span>
+    <span class="tok-keyword">SELECT</span> DATEADD<span class="tok-punctuation">(</span><span class="tok-keyword">day</span><span class="tok-punctuation">,</span> ROW_NUMBER<span class="tok-punctuation">(</span><span class="tok-punctuation">)</span> OVER <span class="tok-punctuation">(</span><span class="tok-keyword">ORDER</span> <span class="tok-keyword">BY</span> SEQ4<span class="tok-punctuation">(</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span> <span class="tok-operator">-</span> <span class="tok-number">1</span><span class="tok-punctuation">,</span>
+                   <span class="tok-string">&#x27;2015-01-01&#x27;</span><span class="tok-specialVariable">::DATE</span><span class="tok-punctuation">)</span><span class="tok-specialVariable">::DATE</span> <span class="tok-keyword">AS</span> d
+    <span class="tok-keyword">FROM</span> <span class="tok-keyword">TABLE</span><span class="tok-punctuation">(</span>GENERATOR<span class="tok-punctuation">(</span>ROWCOUNT <span class="tok-operator">=&gt;</span> <span class="tok-number">5844</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span>
+<span class="tok-punctuation">)</span>
+<span class="tok-keyword">SELECT</span>
+    TO_NUMBER<span class="tok-punctuation">(</span>TO_CHAR<span class="tok-punctuation">(</span>d<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;YYYYMMDD&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    d<span class="tok-punctuation">,</span>
+    <span class="tok-keyword">DAY</span><span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    DECODE<span class="tok-punctuation">(</span>DAYOFWEEKISO<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">1</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Monday&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">2</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Tuesday&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">3</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Wednesday&#x27;</span><span class="tok-punctuation">,</span>
+           <span class="tok-number">4</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Thursday&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">5</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Friday&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">6</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Saturday&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">7</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Sunday&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    MOD<span class="tok-punctuation">(</span>DAYOFWEEKISO<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">7</span><span class="tok-punctuation">)</span> <span class="tok-operator">+</span> <span class="tok-number">1</span><span class="tok-punctuation">,</span>
+    WEEKISO<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">MONTH</span><span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    DECODE<span class="tok-punctuation">(</span><span class="tok-keyword">MONTH</span><span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">1</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;January&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">2</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;February&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">3</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;March&#x27;</span><span class="tok-punctuation">,</span>
+           <span class="tok-number">4</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;April&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">5</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;May&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">6</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;June&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">7</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;July&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">8</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;August&#x27;</span><span class="tok-punctuation">,</span>
+           <span class="tok-number">9</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;September&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">10</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;October&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">11</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;November&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-number">12</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;December&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    QUARTER<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">YEAR</span><span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">MONTH</span><span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    QUARTER<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    <span class="tok-keyword">YEAR</span><span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    DAYOFWEEKISO<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span> <span class="tok-keyword">IN</span> <span class="tok-punctuation">(</span><span class="tok-number">6</span><span class="tok-punctuation">,</span> <span class="tok-number">7</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    DAYOFWEEKISO<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span> <span class="tok-keyword">BETWEEN</span> <span class="tok-number">1</span> <span class="tok-keyword">AND</span> <span class="tok-number">5</span><span class="tok-punctuation">,</span>
+    d <span class="tok-operator">=</span> DATE_TRUNC<span class="tok-punctuation">(</span><span class="tok-string">&#x27;month&#x27;</span><span class="tok-punctuation">,</span> d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    d <span class="tok-operator">=</span> LAST_DAY<span class="tok-punctuation">(</span>d<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;month&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    d <span class="tok-operator">=</span> DATE_TRUNC<span class="tok-punctuation">(</span><span class="tok-string">&#x27;quarter&#x27;</span><span class="tok-punctuation">,</span> d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    d <span class="tok-operator">=</span> LAST_DAY<span class="tok-punctuation">(</span>d<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;quarter&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    d <span class="tok-operator">=</span> DATE_TRUNC<span class="tok-punctuation">(</span><span class="tok-string">&#x27;year&#x27;</span><span class="tok-punctuation">,</span> d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    d <span class="tok-operator">=</span> LAST_DAY<span class="tok-punctuation">(</span>d<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;year&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    DAYOFYEAR<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    YEAROFWEEKISO<span class="tok-punctuation">(</span>d<span class="tok-punctuation">)</span>
+<span class="tok-keyword">FROM</span> date_spine;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">number of rows inserted</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">number of rows inserted</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="5844">5844</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="load-dim_time">Load dim_time</h3>
+<p>Generate all 1,440 rows (one per minute of the day) using <code>GENERATOR</code>.
+Apply the same GENERATOR pattern from <code>dim_date_intro.md</code> — adapt the math to produce hour and minute values instead of calendar dates.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="19" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">load_dim_time</span><span class="cell-counter">[8]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- One row per minute; seconds are zero at this grain</span>
+<span class="tok-keyword">INSERT</span> <span class="tok-keyword">INTO</span> dim_time_underwood_j <span class="tok-punctuation">(</span>
+    time_key<span class="tok-punctuation">,</span> hour_value<span class="tok-punctuation">,</span> minute_value<span class="tok-punctuation">,</span> second_value<span class="tok-punctuation">,</span>
+    am_pm_indicator<span class="tok-punctuation">,</span> business_hours_flag
+<span class="tok-punctuation">)</span>
+<span class="tok-keyword">WITH</span> minutes <span class="tok-keyword">AS</span> <span class="tok-punctuation">(</span>
+    <span class="tok-keyword">SELECT</span> ROW_NUMBER<span class="tok-punctuation">(</span><span class="tok-punctuation">)</span> OVER <span class="tok-punctuation">(</span><span class="tok-keyword">ORDER</span> <span class="tok-keyword">BY</span> SEQ4<span class="tok-punctuation">(</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span> <span class="tok-operator">-</span> <span class="tok-number">1</span> <span class="tok-keyword">AS</span> minute_of_day
+    <span class="tok-keyword">FROM</span> <span class="tok-keyword">TABLE</span><span class="tok-punctuation">(</span>GENERATOR<span class="tok-punctuation">(</span>ROWCOUNT <span class="tok-operator">=&gt;</span> <span class="tok-number">1440</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span>
+<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> clock_parts <span class="tok-keyword">AS</span> <span class="tok-punctuation">(</span>
+    <span class="tok-keyword">SELECT</span> FLOOR<span class="tok-punctuation">(</span>minute_of_day <span class="tok-operator">/</span> <span class="tok-number">60</span><span class="tok-punctuation">)</span><span class="tok-specialVariable">::INTEGER</span> <span class="tok-keyword">AS</span> h<span class="tok-punctuation">,</span>
+           MOD<span class="tok-punctuation">(</span>minute_of_day<span class="tok-punctuation">,</span> <span class="tok-number">60</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> m
+    <span class="tok-keyword">FROM</span> minutes
+<span class="tok-punctuation">)</span>
+<span class="tok-keyword">SELECT</span> h <span class="tok-operator">*</span> <span class="tok-number">100</span> <span class="tok-operator">+</span> m<span class="tok-punctuation">,</span> h<span class="tok-punctuation">,</span> m<span class="tok-punctuation">,</span> <span class="tok-number">0</span><span class="tok-punctuation">,</span>
+       IFF<span class="tok-punctuation">(</span>h <span class="tok-operator">&lt;</span> <span class="tok-number">12</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;AM&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;PM&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+       h <span class="tok-operator">&gt;=</span> <span class="tok-number">9</span> <span class="tok-keyword">AND</span> h <span class="tok-operator">&lt;</span> <span class="tok-number">17</span>
+<span class="tok-keyword">FROM</span> clock_parts;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">number of rows inserted</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">number of rows inserted</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="1440">1440</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="load-dim_account-type-2--merge">Load dim_account (Type 2 — MERGE)</h3>
+<p>Use <code>MERGE INTO</code> to load <code>dim_account_underwood_j</code>.</p>
+<ul>
+<li><code>WHEN NOT MATCHED</code> — insert new accounts with <code>current_flag = TRUE</code>, <code>effective_end_date = '9999-12-31'</code></li>
+<li><code>WHEN MATCHED</code> — for changed accounts, use the two-step expire + insert pattern described in <code>merge_intro.md</code></li>
+</ul>
+<blockquote>
+<p>Match on the natural key (<code>account_id</code> ↔ source <code>id</code>).</p>
+</blockquote>
+</div>
+</div>
+<div class="cell cell-sql" data-index="21" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">load_dim_account_type2</span><span class="cell-counter">[9]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Type 2: expire changed profiles, then insert new current versions.</span>
+<span class="tok-comment">-- Keep both steps in one transaction. Run once per daily snapshot.</span>
+<span class="tok-keyword">BEGIN</span> <span class="tok-keyword">TRANSACTION</span>;
+
+MERGE <span class="tok-keyword">INTO</span> dim_account_underwood_j <span class="tok-keyword">AS</span> target
+<span class="tok-keyword">USING</span> SNOWBEARAIR_DB.PUBLIC.account <span class="tok-keyword">AS</span> source
+    <span class="tok-keyword">ON</span> target.account_id <span class="tok-operator">=</span> source.id <span class="tok-keyword">AND</span> target.current_flag <span class="tok-operator">=</span> <span class="tok-bool">TRUE</span>
+<span class="tok-keyword">WHEN</span> MATCHED <span class="tok-keyword">AND</span> <span class="tok-punctuation">(</span>
+       target.account_name <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.name
+    <span class="tok-keyword">OR</span> target.account_type <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.type
+    <span class="tok-keyword">OR</span> target.account_industry <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.industry
+    <span class="tok-keyword">OR</span> target.account_billing_state <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.billing_state
+    <span class="tok-keyword">OR</span> target.account_billing_count <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.billing_country
+    <span class="tok-keyword">OR</span> target.account_annual_revenue <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.annual_revenue
+    <span class="tok-keyword">OR</span> target.account_number_of_employees <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.number_of_employees
+    <span class="tok-keyword">OR</span> target.account_created_date <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.created_date
+<span class="tok-punctuation">)</span> <span class="tok-keyword">THEN</span> <span class="tok-keyword">UPDATE</span> <span class="tok-keyword">SET</span>
+    target.effective_end_date <span class="tok-operator">=</span> DATEADD<span class="tok-punctuation">(</span><span class="tok-keyword">day</span><span class="tok-punctuation">,</span> <span class="tok-operator">-</span><span class="tok-number">1</span><span class="tok-punctuation">,</span> <span class="tok-keyword">CURRENT_DATE</span><span class="tok-punctuation">(</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    target.current_flag <span class="tok-operator">=</span> <span class="tok-bool">FALSE</span>;
+
+MERGE <span class="tok-keyword">INTO</span> dim_account_underwood_j <span class="tok-keyword">AS</span> target
+<span class="tok-keyword">USING</span> <span class="tok-punctuation">(</span>
+    <span class="tok-keyword">SELECT</span> s.<span class="tok-operator">*</span><span class="tok-punctuation">,</span>
+           IFF<span class="tok-punctuation">(</span>h.account_id <span class="tok-keyword">IS</span> <span class="tok-keyword">NULL</span><span class="tok-punctuation">,</span> COALESCE<span class="tok-punctuation">(</span>s.created_date<span class="tok-punctuation">,</span> <span class="tok-keyword">CURRENT_DATE</span><span class="tok-punctuation">(</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+               <span class="tok-keyword">CURRENT_DATE</span><span class="tok-punctuation">(</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> version_start_date
+    <span class="tok-keyword">FROM</span> SNOWBEARAIR_DB.PUBLIC.account s
+    <span class="tok-keyword">LEFT</span> <span class="tok-keyword">JOIN</span> <span class="tok-punctuation">(</span><span class="tok-keyword">SELECT</span> <span class="tok-keyword">DISTINCT</span> account_id <span class="tok-keyword">FROM</span> dim_account_underwood_j<span class="tok-punctuation">)</span> h
+        <span class="tok-keyword">ON</span> h.account_id <span class="tok-operator">=</span> s.id
+<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> source
+    <span class="tok-keyword">ON</span> target.account_id <span class="tok-operator">=</span> source.id <span class="tok-keyword">AND</span> target.current_flag <span class="tok-operator">=</span> <span class="tok-bool">TRUE</span>
+<span class="tok-keyword">WHEN</span> <span class="tok-keyword">NOT</span> MATCHED <span class="tok-keyword">THEN</span> <span class="tok-keyword">INSERT</span> <span class="tok-punctuation">(</span>
+    account_id<span class="tok-punctuation">,</span> account_name<span class="tok-punctuation">,</span> account_type<span class="tok-punctuation">,</span> account_industry<span class="tok-punctuation">,</span>
+    account_billing_state<span class="tok-punctuation">,</span> account_billing_count<span class="tok-punctuation">,</span> account_annual_revenue<span class="tok-punctuation">,</span>
+    account_number_of_employees<span class="tok-punctuation">,</span> account_created_date<span class="tok-punctuation">,</span>
+    effective_start_date<span class="tok-punctuation">,</span> effective_end_date<span class="tok-punctuation">,</span> current_flag
+<span class="tok-punctuation">)</span> <span class="tok-keyword">VALUES</span> <span class="tok-punctuation">(</span>
+    source.id<span class="tok-punctuation">,</span> source.name<span class="tok-punctuation">,</span> source.type<span class="tok-punctuation">,</span> source.industry<span class="tok-punctuation">,</span>
+    source.billing_state<span class="tok-punctuation">,</span> source.billing_country<span class="tok-punctuation">,</span> source.annual_revenue<span class="tok-punctuation">,</span>
+    source.number_of_employees<span class="tok-punctuation">,</span> source.created_date<span class="tok-punctuation">,</span>
+    source.version_start_date<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;9999-12-31&#x27;</span><span class="tok-specialVariable">::DATE</span><span class="tok-punctuation">,</span> <span class="tok-bool">TRUE</span>
+<span class="tok-punctuation">)</span>;
+
+<span class="tok-keyword">COMMIT</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">status</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">status</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Statement executed successfully.">Statement executed successfully.</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="load-dim_product-type-3--merge">Load dim_product (Type 3 — MERGE)</h3>
+<p>Use <code>MERGE INTO</code> to load <code>dim_product_underwood_j</code>.</p>
+<ul>
+<li><code>WHEN NOT MATCHED</code> — insert new products with <code>prior_product_family_name = NULL</code></li>
+<li><code>WHEN MATCHED</code> — update attributes; when the family changes, shift current → prior before writing the new value</li>
+</ul>
+<blockquote>
+<p>Match on the natural key (<code>product_id</code> ↔ source <code>id</code>). See <code>merge_intro.md</code> for the Type 3 update pattern.</p>
+</blockquote>
+</div>
+</div>
+<div class="cell cell-sql" data-index="23" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">load_dim_product_type3</span><span class="cell-counter">[10]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Type 3 for family; Type 1 for name, code and active flag</span>
+MERGE <span class="tok-keyword">INTO</span> dim_product_underwood_j <span class="tok-keyword">AS</span> target
+<span class="tok-keyword">USING</span> SNOWBEARAIR_DB.PUBLIC.product <span class="tok-keyword">AS</span> source
+    <span class="tok-keyword">ON</span> target.product_id <span class="tok-operator">=</span> source.id
+<span class="tok-keyword">WHEN</span> MATCHED <span class="tok-keyword">AND</span> <span class="tok-punctuation">(</span>
+       target.product_name <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.name
+    <span class="tok-keyword">OR</span> target.product_code <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.product_code
+    <span class="tok-keyword">OR</span> target.product_family <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.family
+    <span class="tok-keyword">OR</span> target.product_is_active <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.is_active
+<span class="tok-punctuation">)</span> <span class="tok-keyword">THEN</span> <span class="tok-keyword">UPDATE</span> <span class="tok-keyword">SET</span>
+    target.prior_product_family_name <span class="tok-operator">=</span> IFF<span class="tok-punctuation">(</span>
+        target.product_family <span class="tok-keyword">IS</span> <span class="tok-keyword">DISTINCT</span> <span class="tok-keyword">FROM</span> source.family<span class="tok-punctuation">,</span>
+        target.product_family<span class="tok-punctuation">,</span> target.prior_product_family_name<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span>
+    target.product_family <span class="tok-operator">=</span> source.family<span class="tok-punctuation">,</span>
+    target.product_name <span class="tok-operator">=</span> source.name<span class="tok-punctuation">,</span>
+    target.product_code <span class="tok-operator">=</span> source.product_code<span class="tok-punctuation">,</span>
+    target.product_is_active <span class="tok-operator">=</span> source.is_active
+<span class="tok-keyword">WHEN</span> <span class="tok-keyword">NOT</span> MATCHED <span class="tok-keyword">THEN</span> <span class="tok-keyword">INSERT</span> <span class="tok-punctuation">(</span>
+    product_id<span class="tok-punctuation">,</span> product_name<span class="tok-punctuation">,</span> product_code<span class="tok-punctuation">,</span> product_family<span class="tok-punctuation">,</span>
+    product_is_active<span class="tok-punctuation">,</span> prior_product_family_name
+<span class="tok-punctuation">)</span> <span class="tok-keyword">VALUES</span> <span class="tok-punctuation">(</span>
+    source.id<span class="tok-punctuation">,</span> source.name<span class="tok-punctuation">,</span> source.product_code<span class="tok-punctuation">,</span> source.family<span class="tok-punctuation">,</span>
+    source.is_active<span class="tok-punctuation">,</span> <span class="tok-keyword">NULL</span>
+<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs cell-outputs-no-top-border"><div class="rv-container" id="res-0">
+  <div class="rv-tabs">
+    <button class="rv-tab rv-tab-active" data-target="res-0-table" onclick="switchTab(this)">Table</button>
+    <button class="rv-tab" data-target="res-0-chart" onclick="switchTab(this)">Chart</button>
+  </div>
+  <div class="rv-panel" id="res-0-table"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">number of rows inserted</span></label><label class="dg-colsel-item"><input type="checkbox" checked data-col="1" onchange="dgToggleCol(this)"><span class="dg-colsel-label">number of rows updated</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">number of rows inserted</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">number of rows updated</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,2)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="10">10</div></td><td><div class="dg-cell" data-raw="0">0</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+  <div class="rv-panel rv-panel-hidden" id="res-0-chart"><div class="ch-layout" id="ch-0"><script type="application/json" id="ch-0-cols">[{"name":"number of rows updated","type":"quantitative"},{"name":"number of rows inserted","type":"quantitative"}]</script><script type="application/json" id="ch-0-vals">[{"number of rows updated":"0","number of rows inserted":"10"}]</script><script type="application/json" id="ch-0-state">{"type":"grouped-bar","xField":"number of rows updated","yFields":["number of rows inserted"],"colorField":null,"aggregate":"sum","sortX":"none","timeResolution":"none","limit":0,"xAxisLabelEnabled":true,"xAxisLabel":"number of rows updated","yAxisLabelEnabled":true,"yAxisLabel":"number of rows inserted"}</script></div></div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h3 id="reload-fact_opportunity_line_item">Reload fact_opportunity_line_item</h3>
+<p>Reload the fact table with the new date/time key columns.</p>
+<p><strong>Date key resolution:</strong> Convert the source date to YYYYMMDD integer format and join to <code>dim_date_underwood_j</code> — same pattern shown in <code>dim_date_intro.md</code>.</p>
+<p><strong>Role-playing joins:</strong> Join <code>dim_date_underwood_j</code> twice with different aliases — once for <code>created_date_key</code>, once for <code>close_date_key</code>.</p>
+<p><strong>Type 2 join note:</strong> Add <code>AND a.current_flag = TRUE</code> when joining <code>dim_account_underwood_j</code> to get the current account profile.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="25" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">load_fact_with_dates</span><span class="cell-counter">[11]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Initial reload: join current accounts as directed by the lab template.</span>
+<span class="tok-comment">-- Run this initial fact load once after recreating the empty fact table.</span>
+<span class="tok-keyword">INSERT</span> <span class="tok-keyword">INTO</span> fact_opportunity_line_item_underwood_j <span class="tok-punctuation">(</span>
+    product_key<span class="tok-punctuation">,</span> account_key<span class="tok-punctuation">,</span> opportunity_key<span class="tok-punctuation">,</span>
+    created_date_key<span class="tok-punctuation">,</span> close_date_key<span class="tok-punctuation">,</span> created_time_key<span class="tok-punctuation">,</span>
+    line_item_quantity<span class="tok-punctuation">,</span> line_item_unit_price<span class="tok-punctuation">,</span> line_item_total_price
+<span class="tok-punctuation">)</span>
+<span class="tok-keyword">SELECT</span>
+    p.product_key<span class="tok-punctuation">,</span> a.account_key<span class="tok-punctuation">,</span> op.opportunity_key<span class="tok-punctuation">,</span>
+    created.date_key<span class="tok-punctuation">,</span> closed.date_key<span class="tok-punctuation">,</span> t.time_key<span class="tok-punctuation">,</span>
+    oli.quantity<span class="tok-punctuation">,</span> oli.unit_price<span class="tok-punctuation">,</span> oli.total_price
+<span class="tok-keyword">FROM</span> SNOWBEARAIR_DB.PUBLIC.opportunity_line_item oli
+<span class="tok-keyword">JOIN</span> SNOWBEARAIR_DB.PUBLIC.opportunity o <span class="tok-keyword">ON</span> o.id <span class="tok-operator">=</span> oli.opportunity_id
+<span class="tok-keyword">JOIN</span> dim_product_underwood_j p <span class="tok-keyword">ON</span> p.product_id <span class="tok-operator">=</span> oli.product_id
+<span class="tok-keyword">JOIN</span> dim_account_underwood_j a
+    <span class="tok-keyword">ON</span> a.account_id <span class="tok-operator">=</span> o.account_id <span class="tok-keyword">AND</span> a.current_flag <span class="tok-operator">=</span> <span class="tok-bool">TRUE</span>
+<span class="tok-keyword">JOIN</span> dim_opportunity_underwood_j op <span class="tok-keyword">ON</span> op.opportunity_id <span class="tok-operator">=</span> o.id
+<span class="tok-keyword">JOIN</span> dim_date_underwood_j created
+    <span class="tok-keyword">ON</span> created.date_key <span class="tok-operator">=</span> TO_NUMBER<span class="tok-punctuation">(</span>TO_CHAR<span class="tok-punctuation">(</span>o.created_date<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;YYYYMMDD&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span>
+<span class="tok-keyword">JOIN</span> dim_date_underwood_j closed
+    <span class="tok-keyword">ON</span> closed.date_key <span class="tok-operator">=</span> TO_NUMBER<span class="tok-punctuation">(</span>TO_CHAR<span class="tok-punctuation">(</span>o.close_date<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;YYYYMMDD&#x27;</span><span class="tok-punctuation">)</span><span class="tok-punctuation">)</span>
+<span class="tok-keyword">JOIN</span> dim_time_underwood_j t
+    <span class="tok-keyword">ON</span> t.time_key <span class="tok-operator">=</span> <span class="tok-keyword">HOUR</span><span class="tok-punctuation">(</span>o.created_date<span class="tok-punctuation">)</span> <span class="tok-operator">*</span> <span class="tok-number">100</span> <span class="tok-operator">+</span> <span class="tok-keyword">MINUTE</span><span class="tok-punctuation">(</span>o.created_date<span class="tok-punctuation">)</span>;</code></pre></div></div>
+  <div class="cell-outputs"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="1 row">1 row</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">number of rows inserted</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:64px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">number of rows inserted</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="4">4</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><hr>
+<h2 id="verify-your-work">Verify Your Work</h2>
+<p>Run these queries to confirm correctness before submitting.</p>
+</div>
+</div>
+<div class="cell cell-sql" data-index="27" data-collapse-state="expanded">
+  <div class="cell-header"><span class="cell-badge"><svg class="cell-icon" viewBox="0 0 16 16" fill="#5d6a85"><use href="#icon-lang-sql"/></svg>SQL</span><span class="cell-name">verify</span><span class="cell-counter">[13]</span></div>
+  <div class="cell-input cell-status-success"><div class="cell-source"><pre><code class="language-sql"><span class="tok-comment">-- Expected: date 5844, time 1440, account 3, product 10, opportunity 3, fact 4</span>
+<span class="tok-keyword">SELECT</span> <span class="tok-string">&#x27;dim_date&#x27;</span> <span class="tok-keyword">AS</span> table_name<span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> row_count <span class="tok-keyword">FROM</span> dim_date_underwood_j
+<span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-string">&#x27;dim_time&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">FROM</span> dim_time_underwood_j
+<span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-string">&#x27;dim_account&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">FROM</span> dim_account_underwood_j
+<span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-string">&#x27;dim_product&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">FROM</span> dim_product_underwood_j
+<span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-string">&#x27;dim_opportunity&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">FROM</span> dim_opportunity_underwood_j
+<span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-string">&#x27;fact_opportunity_line_item&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">FROM</span> fact_opportunity_line_item_underwood_j;
+
+<span class="tok-comment">-- Date range and unique keys</span>
+<span class="tok-keyword">SELECT</span> MIN<span class="tok-punctuation">(</span>calendar_date<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> first_date<span class="tok-punctuation">,</span> MAX<span class="tok-punctuation">(</span>calendar_date<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> last_date<span class="tok-punctuation">,</span>
+       <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> dates<span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-keyword">DISTINCT</span> date_key<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> unique_keys
+<span class="tok-keyword">FROM</span> dim_date_underwood_j;
+
+<span class="tok-comment">-- Exactly one current version per account; expect zero rows</span>
+<span class="tok-keyword">SELECT</span> account_id<span class="tok-punctuation">,</span> COUNT_IF<span class="tok-punctuation">(</span>current_flag<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> current_rows
+<span class="tok-keyword">FROM</span> dim_account_underwood_j
+<span class="tok-keyword">GROUP</span> <span class="tok-keyword">BY</span> account_id
+<span class="tok-keyword">HAVING</span> current_rows <span class="tok-operator">!=</span> <span class="tok-number">1</span>;
+
+<span class="tok-comment">-- Every fact must resolve all six dimension relationships; expect 4 rows</span>
+<span class="tok-keyword">SELECT</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> fully_joined_fact_rows<span class="tok-punctuation">,</span>
+       SUM<span class="tok-punctuation">(</span>f.line_item_quantity<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> quantity<span class="tok-punctuation">,</span>
+       SUM<span class="tok-punctuation">(</span>f.line_item_total_price<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> revenue
+<span class="tok-keyword">FROM</span> fact_opportunity_line_item_underwood_j f
+<span class="tok-keyword">JOIN</span> dim_product_underwood_j p <span class="tok-keyword">ON</span> p.product_key <span class="tok-operator">=</span> f.product_key
+<span class="tok-keyword">JOIN</span> dim_account_underwood_j a <span class="tok-keyword">ON</span> a.account_key <span class="tok-operator">=</span> f.account_key
+<span class="tok-keyword">JOIN</span> dim_opportunity_underwood_j o <span class="tok-keyword">ON</span> o.opportunity_key <span class="tok-operator">=</span> f.opportunity_key
+<span class="tok-keyword">JOIN</span> dim_date_underwood_j created <span class="tok-keyword">ON</span> created.date_key <span class="tok-operator">=</span> f.created_date_key
+<span class="tok-keyword">JOIN</span> dim_date_underwood_j closed <span class="tok-keyword">ON</span> closed.date_key <span class="tok-operator">=</span> f.close_date_key
+<span class="tok-keyword">JOIN</span> dim_time_underwood_j t <span class="tok-keyword">ON</span> t.time_key <span class="tok-operator">=</span> f.created_time_key;
+
+<span class="tok-comment">-- Source totals should match the modeled totals above</span>
+<span class="tok-keyword">SELECT</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> source_rows<span class="tok-punctuation">,</span> SUM<span class="tok-punctuation">(</span>quantity<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> quantity<span class="tok-punctuation">,</span> SUM<span class="tok-punctuation">(</span>total_price<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> revenue
+<span class="tok-keyword">FROM</span> SNOWBEARAIR_DB.PUBLIC.opportunity_line_item;
+
+<span class="tok-comment">-- Both date roles in one query</span>
+<span class="tok-keyword">SELECT</span> created.year <span class="tok-keyword">AS</span> created_year<span class="tok-punctuation">,</span> created.quarter <span class="tok-keyword">AS</span> created_quarter<span class="tok-punctuation">,</span>
+       closed.year <span class="tok-keyword">AS</span> close_year<span class="tok-punctuation">,</span> closed.quarter <span class="tok-keyword">AS</span> close_quarter<span class="tok-punctuation">,</span>
+       SUM<span class="tok-punctuation">(</span>f.line_item_total_price<span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> revenue
+<span class="tok-keyword">FROM</span> fact_opportunity_line_item_underwood_j f
+<span class="tok-keyword">JOIN</span> dim_date_underwood_j created <span class="tok-keyword">ON</span> created.date_key <span class="tok-operator">=</span> f.created_date_key
+<span class="tok-keyword">JOIN</span> dim_date_underwood_j closed <span class="tok-keyword">ON</span> closed.date_key <span class="tok-operator">=</span> f.close_date_key
+<span class="tok-keyword">GROUP</span> <span class="tok-keyword">BY</span> created.year<span class="tok-punctuation">,</span> created.quarter<span class="tok-punctuation">,</span> closed.year<span class="tok-punctuation">,</span> closed.quarter
+<span class="tok-keyword">ORDER</span> <span class="tok-keyword">BY</span> created_year<span class="tok-punctuation">,</span> created_quarter<span class="tok-punctuation">,</span> close_year<span class="tok-punctuation">,</span> close_quarter;
+
+<span class="tok-comment">-- No raw date/timestamp columns in the fact table; expect zero rows</span>
+<span class="tok-keyword">SELECT</span> column_name<span class="tok-punctuation">,</span> data_type
+<span class="tok-keyword">FROM</span> SNOWBEARAIR_DB.INFORMATION_SCHEMA.COLUMNS
+<span class="tok-keyword">WHERE</span> table_schema <span class="tok-operator">=</span> <span class="tok-string">&#x27;MODELED&#x27;</span>
+  <span class="tok-keyword">AND</span> table_name <span class="tok-operator">=</span> <span class="tok-string">&#x27;FACT_OPPORTUNITY_LINE_ITEM_UNDERWOOD_J&#x27;</span>
+  <span class="tok-keyword">AND</span> <span class="tok-punctuation">(</span>data_type <span class="tok-operator">=</span> <span class="tok-string">&#x27;DATE&#x27;</span> <span class="tok-keyword">OR</span> data_type <span class="tok-keyword">LIKE</span> <span class="tok-string">&#x27;TIMESTAMP%&#x27;</span><span class="tok-punctuation">)</span>;
+
+<span class="tok-comment">-- Final summary for the notebook result grid and HTML export</span>
+<span class="tok-keyword">WITH</span> checks <span class="tok-keyword">AS</span> <span class="tok-punctuation">(</span>
+    <span class="tok-keyword">SELECT</span> <span class="tok-number">1</span> <span class="tok-keyword">AS</span> check_order<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Date rows&#x27;</span> <span class="tok-keyword">AS</span> check_name<span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> actual<span class="tok-punctuation">,</span> <span class="tok-number">5844</span> <span class="tok-keyword">AS</span> expected <span class="tok-keyword">FROM</span> dim_date_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">2</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Time rows&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">1440</span> <span class="tok-keyword">FROM</span> dim_time_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">3</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Account rows&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">3</span> <span class="tok-keyword">FROM</span> dim_account_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">4</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Product rows&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">10</span> <span class="tok-keyword">FROM</span> dim_product_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">5</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Opportunity rows&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">3</span> <span class="tok-keyword">FROM</span> dim_opportunity_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">6</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Fact rows&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-keyword">COUNT</span><span class="tok-punctuation">(</span><span class="tok-operator">*</span><span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">4</span> <span class="tok-keyword">FROM</span> fact_opportunity_line_item_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">7</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Total quantity&#x27;</span><span class="tok-punctuation">,</span> SUM<span class="tok-punctuation">(</span>line_item_quantity<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">22</span> <span class="tok-keyword">FROM</span> fact_opportunity_line_item_underwood_j
+    <span class="tok-keyword">UNION</span> <span class="tok-keyword">ALL</span> <span class="tok-keyword">SELECT</span> <span class="tok-number">8</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;Total revenue&#x27;</span><span class="tok-punctuation">,</span> SUM<span class="tok-punctuation">(</span>line_item_total_price<span class="tok-punctuation">)</span><span class="tok-punctuation">,</span> <span class="tok-number">360000</span> <span class="tok-keyword">FROM</span> fact_opportunity_line_item_underwood_j
+<span class="tok-punctuation">)</span>
+<span class="tok-keyword">SELECT</span> check_name<span class="tok-punctuation">,</span> actual<span class="tok-punctuation">,</span> expected<span class="tok-punctuation">,</span> IFF<span class="tok-punctuation">(</span>actual <span class="tok-operator">=</span> expected<span class="tok-punctuation">,</span> <span class="tok-string">&#x27;PASS&#x27;</span><span class="tok-punctuation">,</span> <span class="tok-string">&#x27;FAIL&#x27;</span><span class="tok-punctuation">)</span> <span class="tok-keyword">AS</span> <span class="tok-keyword">result</span>
+<span class="tok-keyword">FROM</span> checks
+<span class="tok-keyword">ORDER</span> <span class="tok-keyword">BY</span> check_order;</code></pre></div></div>
+  <div class="cell-outputs cell-outputs-no-top-border"><div class="rv-container" id="res-1">
+  <div class="rv-tabs">
+    <button class="rv-tab rv-tab-active" data-target="res-1-table" onclick="switchTab(this)">Table</button>
+    <button class="rv-tab" data-target="res-1-chart" onclick="switchTab(this)">Chart</button>
+  </div>
+  <div class="rv-panel" id="res-1-table"><div class="dg-container">
+  <div class="dg-toolbar">
+    <span class="dg-row-count" data-original="8 rows">8 rows</span>
+    <div class="dg-toolbar-actions">
+      <div class="dg-search" onmouseenter="dgSearchHover(this,true)" onmouseleave="dgSearchHover(this,false)">
+        <svg class="dg-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+        <input class="dg-search-input" type="text" placeholder="Search results" oninput="dgSearchTable(this)" onfocus="dgSearchFocus(this,true)" onblur="dgSearchFocus(this,false)" onkeydown="if(event.key==='Escape'){dgSearchClear(this)}">
+        <button class="dg-search-clear" onclick="dgSearchClear(this)" title="Clear search" hidden>
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-clear-fill"/></svg>
+        </button>
+      </div>
+      <div class="dg-colsel-wrapper">
+        <button class="dg-colsel-btn" onclick="dgToggleColSel(this)" title="Column selection">
+          <svg viewBox="0 0 16 16" fill="currentColor"><use href="#icon-col-filter"/></svg>
+        </button>
+        <div class="dg-colsel-popover" hidden>
+          <div class="dg-colsel-search">
+            <svg class="dg-colsel-search-icon" viewBox="0 0 16 16" fill="currentColor"><use href="#icon-search"/></svg>
+            <input class="dg-colsel-search-input" type="text" placeholder="Search" oninput="dgColSelSearch(this)">
+          </div>
+          <label class="dg-colsel-item dg-colsel-all"><input type="checkbox" checked onchange="dgToggleAllCols(this)"><span class="dg-colsel-label">Select all</span></label>
+          <div class="dg-colsel-sep"></div>
+          <div class="dg-colsel-list"><label class="dg-colsel-item"><input type="checkbox" checked data-col="0" onchange="dgToggleCol(this)"><span class="dg-colsel-label">CHECK_NAME</span></label><label class="dg-colsel-item"><input type="checkbox" checked data-col="1" onchange="dgToggleCol(this)"><span class="dg-colsel-label">ACTUAL</span></label><label class="dg-colsel-item"><input type="checkbox" checked data-col="2" onchange="dgToggleCol(this)"><span class="dg-colsel-label">EXPECTED</span></label><label class="dg-colsel-item"><input type="checkbox" checked data-col="3" onchange="dgToggleCol(this)"><span class="dg-colsel-label">RESULT</span></label></div>
+          <div class="dg-colsel-empty" hidden></div>
+          <div class="dg-colsel-sep"></div>
+          <button class="dg-colsel-apply" onclick="dgColSelApply(this)">Apply</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dg-scroll" style="max-height:260px">
+    <table class="dg-table">
+      <thead>
+        <tr><th class="dg-row-num"></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">CHECK_NAME</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,1)">&#8942;</button></div></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">ACTUAL</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,2)">&#8942;</button></div></th><th data-col-type="quantitative"><div class="dg-col-header"><span class="dg-col-name">EXPECTED</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,3)">&#8942;</button></div></th><th data-col-type="nominal"><div class="dg-col-header"><span class="dg-col-name">RESULT</span><span class="dg-sort-arrow"></span><button class="dg-col-menu-btn" title="Column options" onclick="dgOpenColMenu(event,this,4)">&#8942;</button></div></th></tr>
+        <tr class="dg-stats-row" hidden><th class="dg-row-num"></th><th class="dg-stats-th"></th><th class="dg-stats-th"></th><th class="dg-stats-th"></th><th class="dg-stats-th"></th></tr>
+      </thead>
+      <tbody><tr><td class="dg-row-num">1</td><td><div class="dg-cell" data-raw="Date rows">Date rows</div></td><td><div class="dg-cell" data-raw="5844.00">5844.00</div></td><td><div class="dg-cell" data-raw="5844">5844</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">2</td><td><div class="dg-cell" data-raw="Time rows">Time rows</div></td><td><div class="dg-cell" data-raw="1440.00">1440.00</div></td><td><div class="dg-cell" data-raw="1440">1440</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">3</td><td><div class="dg-cell" data-raw="Account rows">Account rows</div></td><td><div class="dg-cell" data-raw="3.00">3.00</div></td><td><div class="dg-cell" data-raw="3">3</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">4</td><td><div class="dg-cell" data-raw="Product rows">Product rows</div></td><td><div class="dg-cell" data-raw="10.00">10.00</div></td><td><div class="dg-cell" data-raw="10">10</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">5</td><td><div class="dg-cell" data-raw="Opportunity rows">Opportunity rows</div></td><td><div class="dg-cell" data-raw="3.00">3.00</div></td><td><div class="dg-cell" data-raw="3">3</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">6</td><td><div class="dg-cell" data-raw="Fact rows">Fact rows</div></td><td><div class="dg-cell" data-raw="4.00">4.00</div></td><td><div class="dg-cell" data-raw="4">4</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">7</td><td><div class="dg-cell" data-raw="Total quantity">Total quantity</div></td><td><div class="dg-cell" data-raw="22.00">22.00</div></td><td><div class="dg-cell" data-raw="22">22</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr><tr><td class="dg-row-num">8</td><td><div class="dg-cell" data-raw="Total revenue">Total revenue</div></td><td><div class="dg-cell" data-raw="360000.00">360000.00</div></td><td><div class="dg-cell" data-raw="360000">360000</div></td><td><div class="dg-cell" data-raw="PASS">PASS</div></td></tr></tbody>
+    </table>
+    <div class="dg-search-empty" hidden></div>
+  </div>
+</div></div>
+  <div class="rv-panel rv-panel-hidden" id="res-1-chart"><div class="ch-layout" id="ch-1"><script type="application/json" id="ch-1-cols">[{"name":"CHECK_NAME","type":"nominal"},{"name":"ACTUAL","type":"quantitative"}]</script><script type="application/json" id="ch-1-vals">[{"CHECK_NAME":"Date rows","ACTUAL":"5844.00"},{"CHECK_NAME":"Time rows","ACTUAL":"1440.00"},{"CHECK_NAME":"Account rows","ACTUAL":"3.00"},{"CHECK_NAME":"Product rows","ACTUAL":"10.00"},{"CHECK_NAME":"Opportunity rows","ACTUAL":"3.00"},{"CHECK_NAME":"Fact rows","ACTUAL":"4.00"},{"CHECK_NAME":"Total quantity","ACTUAL":"22.00"},{"CHECK_NAME":"Total revenue","ACTUAL":"360000.00"}]</script><script type="application/json" id="ch-1-state">{"type":"grouped-bar","xField":"CHECK_NAME","yFields":["ACTUAL"],"colorField":null,"aggregate":"sum","sortX":"none","timeResolution":"none","limit":0,"xAxisLabelEnabled":true,"xAxisLabel":"CHECK_NAME","yAxisLabelEnabled":true,"yAxisLabel":"ACTUAL"}</script></div></div>
+</div></div>
+</div>
+<div class="markdown-wrapper">
+  <div class="markdown-block"><h2 id="written-explanation">Written explanation</h2>
+<p><strong>Notebook name:</strong> <code>UNDERWOOD_J_LAB2</code><br><strong>SQL context:</strong> <code>SNOWBEARAIR_DB.MODELED</code></p>
+<p><strong>Account Type 2:</strong> Type 2 keeps old account profiles when details change. Type 1 would overwrite them and lose the history needed to explain past sales.</p>
+<p><strong>Product Type 3:</strong> Type 3 stores the current and previous product family. That is enough for a before-and-after comparison; Type 1 loses the previous family, while Type 2 stores more history than this task needs.</p>
+<p><strong>Role-playing dimensions:</strong> One date table serves different purposes. I joined <code>dim_date_underwood_j</code> twice, using <code>created_date_key</code> for creation dates and <code>close_date_key</code> for closing dates.</p>
+<h2 id="results">Results</h2>
+<p>The model contains 5,844 dates, 1,440 time entries, 3 accounts, 10 products, 3 opportunities, and 4 sales records. All sales link to their dimensions, with total quantity 22 and revenue $360,000 matching the source. Rerunning the unchanged account and product loads creates no duplicates. Account history and product family changes also passed 16 checks using temporary copies.</p>
+</div>
+</div>
+  </div>
+  <script>var __i18n = {"hideColumnStats":"Hide column stats","showColumnStats":"Show column stats/filters","sortAscending":"Sort ascending","sortDescending":"Sort descending","increaseDecimalPlaces":"Increase decimal places","decreaseDecimalPlaces":"Decrease decimal places","showThousandsSeparators":"Show thousands separators","displayAsPercentage":"Display as a percentage","formatAsCurrency":"Format as currency (USD)","selectDateFormat":"Select date format","noResultsFor":"No results for","filteredRowCount":"{visible} of {total} rows","totalRowCount":"{total} rows","totalRowCountSingular":"{total} row","none":"None","noneParenthesized":"(None)","barChart":"Bar chart","stackedBarChart":"Stacked bar chart","lineChart":"Line chart","areaChart":"Area chart","pieChart":"Pie chart","chartType":"Chart type","xAxis":"X-axis","sort":"Sort","yAxis":"Y-axis","value":"Value","aggregate":"Aggregate","groupBy":"Group by","limit":"Limit","timeResolution":"Time res.","byXAscending":"By X ascending","byXDescending":"By X descending","byYAscending":"By Y ascending","byYDescending":"By Y descending","sum":"Sum","average":"Average","count":"Count","min":"Min","max":"Max","median":"Median","year":"Year","month":"Month","week":"Week","day":"Day","hours":"Hours","minutes":"Minutes","top10":"Top 10","top25":"Top 25","top50":"Top 50","top100":"Top 100","bottom10":"Bottom 10","bottom50":"Bottom 50","bottom100":"Bottom 100","nulls":"Nulls","distinct":"Distinct","addColumn":"Add column","removeColumn":"Remove column","columns":"Columns","xAxisLabel":"X-axis label","yAxisLabel":"Y-axis label","addLabel":"Add label..."};</script>
+  <script>
+// ---------- tab switching ----------
+function switchTab(btn) {
+  var container = btn.closest('.rv-container');
+  container.querySelectorAll('.rv-tab').forEach(function(t) { t.classList.remove('rv-tab-active'); });
+  container.querySelectorAll('.rv-panel').forEach(function(p) { p.classList.add('rv-panel-hidden'); });
+  btn.classList.add('rv-tab-active');
+  var panel = document.getElementById(btn.getAttribute('data-target'));
+  if (!panel) return;
+  panel.classList.remove('rv-panel-hidden');
+  panel.querySelectorAll('.ch-layout').forEach(chInit);
+}
+
+// ---------- column menu ----------
+// Globals are scoped to a single standalone document. If this export is ever
+// embedded as an iframe alongside other instances, wrap in an IIFE to isolate state.
+var _dgMenu = { table: null, colIdx: -1 };
+var _dgFmtMap = new Map();
+
+function dgGetFmt(table, colIdx) {
+  if (!_dgFmtMap.has(table)) _dgFmtMap.set(table, {});
+  var m = _dgFmtMap.get(table);
+  if (!m[colIdx]) m[colIdx] = { precision: null, commas: false, percent: false, currency: false, dateFormat: null };
+  return m[colIdx];
+}
+
+// Build the menu with createElement so no string-escaping is needed inside the template literal.
+function dgOpenColMenu(e, btn, colIdx) {
+  e.stopPropagation();
+  var menu = document.getElementById('dg-col-menu');
+  var table = btn.closest('table');
+  if (_dgMenu.table === table && _dgMenu.colIdx === colIdx && !menu.hidden) {
+    menu.hidden = true;
+    return;
+  }
+  _dgMenu = { table: table, colIdx: colIdx };
+
+  var th = table.rows[0] && table.rows[0].cells[colIdx];
+  var colType = th ? (th.getAttribute('data-col-type') || 'nominal') : 'nominal';
+  var fmt = dgGetFmt(table, colIdx);
+  var statsRow = table.querySelector('.dg-stats-row');
+  var statsShown = statsRow && !statsRow.hidden;
+
+  // Clear previous items
+  while (menu.firstChild) menu.removeChild(menu.firstChild);
+
+  function addItem(label, fn, active) {
+    var b = document.createElement('button');
+    b.className = 'dg-col-menu-item' + (active ? ' dg-active' : '');
+    b.textContent = label;
+    b.onclick = fn;
+    menu.appendChild(b);
+  }
+  function addSep() {
+    var d = document.createElement('div');
+    d.className = 'dg-col-menu-sep';
+    menu.appendChild(d);
+  }
+
+  addItem(statsShown ? __i18n.hideColumnStats : __i18n.showColumnStats, dgToggleStats);
+  addSep();
+  addItem('↑ ' + __i18n.sortAscending,  function() { dgSortTable('asc');  });
+  addItem('↓ ' + __i18n.sortDescending, function() { dgSortTable('desc'); });
+
+  if (colType === 'quantitative') {
+    addSep();
+    addItem('.0+ ' + __i18n.increaseDecimalPlaces,  function() { dgFmtCol('precision_inc'); });
+    addItem('.0− ' + __i18n.decreaseDecimalPlaces, function() { dgFmtCol('precision_dec'); });
+    addSep();
+    addItem(', ' + __i18n.showThousandsSeparators, function() { dgFmtCol('commas');   }, fmt.commas);
+    addItem('% ' + __i18n.displayAsPercentage,   function() { dgFmtCol('percent');  }, fmt.percent);
+    addItem('$ ' + __i18n.formatAsCurrency,  function() { dgFmtCol('currency'); }, fmt.currency);
+  }
+
+  if (colType === 'temporal') {
+    addSep();
+
+    // Build example labels using today's date — same pattern as the live app's getDateFormatOptions()
+    var today = new Date();
+    var todayDate = today.toISOString().split('T')[0];                       // "2024-01-15"
+    var todayTime = today.toISOString().split('T')[1].split('.')[0];         // "14:30:22"
+    var todayMonthYear = today.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' }); // "January 2024"
+
+    var dateFormats = [
+      { key: 'ISO_DATETIME_SEP_BY_SPACE', label: todayDate + ' ' + todayTime },
+      { key: 'ISO_DATE',                  label: todayDate },
+      { key: 'LOCAL_MONTH_YEAR',          label: todayMonthYear },
+    ];
+
+    // "Select date format ▶" header — click toggles the inline sub-list
+    var subHeader = document.createElement('button');
+    subHeader.className = 'dg-col-menu-item dg-submenu-header';
+    subHeader.textContent = __i18n.selectDateFormat + ' ';
+    var arrow = document.createElement('span');
+    arrow.className = 'dg-submenu-arrow';
+    arrow.textContent = '▶';
+    subHeader.appendChild(arrow);
+    menu.appendChild(subHeader);
+
+    var subList = document.createElement('div');
+    subList.className = 'dg-submenu-list';
+    subList.hidden = true;
+
+    dateFormats.forEach(function(df) {
+      var b = document.createElement('button');
+      b.className = 'dg-col-menu-item dg-submenu-item' + (fmt.dateFormat === df.key ? ' dg-active' : '');
+      b.textContent = df.label;
+      b.onclick = function() {
+        fmt.dateFormat = df.key;
+        // Update active state without closing the menu (matches live app shouldCloseMenuOnSelect=false)
+        Array.from(subList.querySelectorAll('.dg-submenu-item')).forEach(function(el) {
+          el.classList.toggle('dg-active', el === b);
+        });
+        dgFmtDateCol(table, colIdx, df.key);
+      };
+      subList.appendChild(b);
+    });
+
+    subHeader.onclick = function() {
+      subList.hidden = !subList.hidden;
+      var arrow = subHeader.querySelector('.dg-submenu-arrow');
+      if (arrow) arrow.innerHTML = subList.hidden ? '▶' : '▼';
+    };
+
+    menu.appendChild(subList);
+  }
+
+  var r = btn.getBoundingClientRect();
+  menu.style.left = r.left + 'px';
+  menu.style.top  = (r.bottom + 2) + 'px';
+  menu.hidden = false;
+}
+
+// ---------- sort ----------
+function dgSortTable(dir) {
+  var table = _dgMenu.table;
+  var colIdx = _dgMenu.colIdx;
+  document.getElementById('dg-col-menu').hidden = true;
+  if (!table || colIdx < 0) return;
+  var tbody = table.querySelector('tbody');
+  var rows = Array.from(tbody.rows);
+  rows.sort(function(a, b) {
+    var ac = a.cells[colIdx], bc = b.cells[colIdx];
+    var ad = ac ? ac.querySelector('.dg-cell') : null;
+    var bd = bc ? bc.querySelector('.dg-cell') : null;
+    var av = ad ? (ad.getAttribute('data-raw') || '') : (ac ? ac.textContent.trim() : '');
+    var bv = bd ? (bd.getAttribute('data-raw') || '') : (bc ? bc.textContent.trim() : '');
+    if (av === '' && bv === '') return 0;
+    if (av === '') return 1;
+    if (bv === '') return -1;
+    var an = parseFloat(av), bn = parseFloat(bv);
+    if (!isNaN(an) && !isNaN(bn)) return dir === 'asc' ? an - bn : bn - an;
+    return dir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+  rows.forEach(function(row) { tbody.appendChild(row); });
+  table.querySelectorAll('thead .dg-sort-arrow').forEach(function(el) { el.textContent = ''; });
+  var headerTh = table.rows[0] && table.rows[0].cells[colIdx];
+  if (headerTh) {
+    var arrow = headerTh.querySelector('.dg-sort-arrow');
+    if (arrow) arrow.textContent = dir === 'asc' ? ' ↑' : ' ↓';
+  }
+  // Refresh stats if visible
+  var statsRow = table.querySelector('.dg-stats-row');
+  if (statsRow && !statsRow.hidden) dgComputeStats(table, statsRow);
+}
+
+// ---------- number formatting ----------
+function dgGetAutoPrec(raw) {
+  var dot = raw.indexOf('.');
+  return dot < 0 ? 0 : Math.min(raw.length - dot - 1, 10);
+}
+
+function dgFormatNum(raw, fmt) {
+  var num = parseFloat(raw);
+  if (isNaN(num)) return raw;
+  var val = fmt.percent ? num * 100 : num;
+  var prec = fmt.precision !== null ? fmt.precision : dgGetAutoPrec(raw);
+  var opts = { minimumFractionDigits: prec, maximumFractionDigits: prec, useGrouping: fmt.commas || fmt.currency };
+  var result;
+  if (fmt.currency) {
+    result = new Intl.NumberFormat('en-US', Object.assign({ style: 'currency', currency: 'USD' }, opts)).format(val);
+  } else {
+    result = new Intl.NumberFormat('en-US', opts).format(val);
+    if (fmt.percent) result += '%';
+  }
+  return result;
+}
+
+function dgFmtCol(action) {
+  var table = _dgMenu.table;
+  var colIdx = _dgMenu.colIdx;
+  document.getElementById('dg-col-menu').hidden = true;
+  if (!table || colIdx < 0) return;
+  var fmt = dgGetFmt(table, colIdx);
+  var tbody = table.querySelector('tbody');
+  var firstRaw = '';
+  var firstRow = tbody.rows[0];
+  if (firstRow && firstRow.cells[colIdx]) {
+    var fd = firstRow.cells[colIdx].querySelector('.dg-cell');
+    firstRaw = fd ? (fd.getAttribute('data-raw') || '') : '';
+  }
+  var basePrec = fmt.precision !== null ? fmt.precision : dgGetAutoPrec(firstRaw);
+  if      (action === 'precision_inc') { fmt.precision = basePrec + 1; }
+  else if (action === 'precision_dec') { fmt.precision = Math.max(0, basePrec - 1); }
+  else if (action === 'commas')   { fmt.commas   = !fmt.commas; }
+  else if (action === 'percent')  { fmt.percent  = !fmt.percent;  if (fmt.percent)  fmt.currency = false; }
+  else if (action === 'currency') { fmt.currency = !fmt.currency; if (fmt.currency) fmt.percent  = false; }
+  Array.from(tbody.rows).forEach(function(row) {
+    var cell = row.cells[colIdx]; if (!cell) return;
+    var div = cell.querySelector('.dg-cell'); if (!div) return;
+    var raw = div.getAttribute('data-raw'); if (!raw) return;
+    div.textContent = dgFormatNum(raw, fmt);
+  });
+}
+
+// ---------- date formatting ----------
+// Format a raw date/timestamp string into the chosen display format.
+// Input strings can be "YYYY-MM-DD", "YYYY-MM-DD HH:mm:ss.SSS", or any
+// Snowflake-style date string. All parsed and displayed in UTC.
+function dgFormatDate(raw, fmtKey) {
+  if (!raw || raw === 'NULL') return raw;
+  // Normalise to ISO UTC so parsing is unambiguous across timezones:
+  // "2010-01-01 00:00:00.000" → "2010-01-01T00:00:00.000Z"
+  var iso = raw.replace(' ', 'T');
+  if (!/[Zz]|[+-]d{2}:?d{2}$/.test(iso)) iso += 'Z';
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return raw; // unparseable — leave as-is
+
+  var p2 = function(n) { return String(n).padStart(2, '0'); };
+  var yr = d.getUTCFullYear();
+  var mo = p2(d.getUTCMonth() + 1);
+  var dy = p2(d.getUTCDate());
+
+  if (fmtKey === 'ISO_DATE') {
+    // "YYYY-MM-DD"
+    return yr + '-' + mo + '-' + dy;
+  }
+  if (fmtKey === 'LOCAL_MONTH_YEAR') {
+    // "January 2010"  (localized, matching live app's MON YYYY format)
+    return d.toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  }
+  // ISO_DATETIME_SEP_BY_SPACE: "YYYY-MM-DD HH:mm:ss"  (no ms, matching live app's HH24:MI:SS format)
+  return yr + '-' + mo + '-' + dy + ' ' +
+    p2(d.getUTCHours()) + ':' + p2(d.getUTCMinutes()) + ':' + p2(d.getUTCSeconds());
+}
+
+function dgFmtDateCol(table, colIdx, fmtKey) {
+  if (!table || colIdx < 0) return;
+  var tbody = table.querySelector('tbody');
+  Array.from(tbody.rows).forEach(function(row) {
+    var cell = row.cells[colIdx]; if (!cell) return;
+    var div = cell.querySelector('.dg-cell'); if (!div) return;
+    var raw = div.getAttribute('data-raw'); if (!raw) return;
+    div.textContent = dgFormatDate(raw, fmtKey);
+  });
+}
+
+// ---------- column stats ----------
+function dgToggleStats() {
+  var table = _dgMenu.table;
+  document.getElementById('dg-col-menu').hidden = true;
+  if (!table) return;
+  var statsRow = table.querySelector('.dg-stats-row');
+  if (!statsRow) return;
+  statsRow.hidden = !statsRow.hidden;
+  if (!statsRow.hidden) dgComputeStats(table, statsRow);
+}
+
+function dgComputeStats(table, statsRow) {
+  var headerRow = table.rows[0];
+  var bodyRows = Array.from(table.querySelector('tbody').rows);
+  Array.from(statsRow.cells).forEach(function(statsTh, thIdx) {
+    if (thIdx === 0) return;
+    var hth = headerRow.cells[thIdx];
+    var colType = hth ? (hth.getAttribute('data-col-type') || 'nominal') : 'nominal';
+    var raws = bodyRows.map(function(row) {
+      var cell = row.cells[thIdx]; if (!cell) return null;
+      var div = cell.querySelector('.dg-cell');
+      var r = div ? div.getAttribute('data-raw') : null;
+      return (r === null || r === '') ? null : r;
+    });
+    var nulls = raws.filter(function(v) { return v === null; }).length;
+    var nonNull = raws.filter(function(v) { return v !== null; });
+    var text = '';
+    if (colType === 'quantitative') {
+      var nums = nonNull.map(Number).filter(function(n) { return !isNaN(n); });
+      if (nums.length) {
+        text = __i18n.min + ' ' + Math.min.apply(null, nums) + ' ' + __i18n.max + ' ' + Math.max.apply(null, nums);
+        if (nulls) text += ' ' + __i18n.nulls + ' ' + nulls;
+      }
+    } else {
+      text = __i18n.distinct + ' ' + new Set(nonNull).size;
+      if (nulls) text += ' ' + __i18n.nulls + ' ' + nulls;
+    }
+    statsTh.textContent = text;
+  });
+}
+
+document.addEventListener('click', function(e) {
+  var t = e.target;
+  if (!t || typeof t.closest !== 'function') return;
+  if (!t.closest('#dg-col-menu') && !t.closest('.dg-col-menu-btn')) {
+    document.getElementById('dg-col-menu').hidden = true;
+  }
+  document.querySelectorAll('.dg-colsel-popover').forEach(function(p) {
+    if (!p.hidden && !p.closest('.dg-colsel-wrapper').contains(t)) p.hidden = true;
+  });
+  document.querySelectorAll('.ch-add-col-menu').forEach(function(m) {
+    if (!m.hidden && !m.closest('.ch-add-col-wrapper').contains(t)) m.hidden = true;
+  });
+});
+
+// ---------- table search (expand/collapse like live notebook) ----------
+function dgSearchHover(el, hovering) {
+  el.dataset.dgHover = hovering ? '1' : '';
+  dgSearchSyncDeferred(el, hovering);
+}
+function dgSearchFocus(input, focused) {
+  var el = input.closest('.dg-search');
+  el.dataset.dgFocus = focused ? '1' : '';
+  dgSearchSyncDeferred(el, focused);
+}
+function dgSearchSyncDeferred(el, immediate) {
+  if (immediate) { dgSearchSync(el); return; }
+  // Small delay lets hover/blur settle before deciding to collapse
+  setTimeout(function() { dgSearchSync(el); }, 50);
+}
+function dgSearchSync(el) {
+  var input = el.querySelector('.dg-search-input');
+  var expanded = el.dataset.dgHover || el.dataset.dgFocus || (input && input.value);
+  el.classList.toggle('dg-search-expanded', !!expanded);
+}
+function dgSearchClear(el) {
+  var search = el.closest('.dg-search');
+  var input = search.querySelector('.dg-search-input');
+  input.value = '';
+  input.blur();
+  search.dataset.dgHover = '';
+  search.dataset.dgFocus = '';
+  dgSearchSync(search);
+  search.querySelector('.dg-search-clear').hidden = true;
+  dgSearchFilter(search);
+}
+var _dgSearchTimer;
+function dgSearchTable(input) {
+  var search = input.closest('.dg-search');
+  search.querySelector('.dg-search-clear').hidden = !input.value;
+  clearTimeout(_dgSearchTimer);
+  _dgSearchTimer = setTimeout(function() { dgSearchFilter(search); }, 150);
+}
+function dgSearchFilter(search) {
+  var container = search.closest('.dg-container');
+  if (!container) return;
+  var table = container.querySelector('.dg-table');
+  if (!table) return;
+  var term = (search.querySelector('.dg-search-input').value || '').toLowerCase();
+  var tbody = table.querySelector('tbody');
+  var rows = Array.from(tbody.rows);
+  rows.forEach(function(row) {
+    if (!term) { row.style.display = ''; return; }
+    var text = '';
+    for (var i = 1; i < row.cells.length; i++) {
+      if (row.cells[i].style.display === 'none') continue;
+      var div = row.cells[i].querySelector('.dg-cell');
+      text += (div ? div.textContent : row.cells[i].textContent) + ' ';
+    }
+    row.style.display = text.toLowerCase().indexOf(term) >= 0 ? '' : 'none';
+  });
+  var total = rows.length;
+  var visible = rows.filter(function(r) { return r.style.display !== 'none'; }).length;
+
+  var emptyEl = container.querySelector('.dg-search-empty');
+  if (emptyEl) {
+    var showEmpty = term && visible === 0;
+    emptyEl.hidden = !showEmpty;
+    if (showEmpty) {
+      emptyEl.textContent = __i18n.noResultsFor + ' “' + term + '”';
+    }
+  }
+
+  var countSpan = container.querySelector('.dg-row-count');
+  if (!countSpan) return;
+  function fmtRowCount(n) {
+    return (n === 1 ? __i18n.totalRowCountSingular : __i18n.totalRowCount).replace('{total}', n.toLocaleString());
+  }
+  countSpan.textContent = term
+    ? __i18n.filteredRowCount.replace('{visible}', visible.toLocaleString()).replace('{total}', total.toLocaleString())
+    : (countSpan.getAttribute('data-original') || fmtRowCount(total));
+}
+
+// ---------- column selection popover ----------
+function dgToggleColSel(btn) {
+  var wrapper = btn.closest('.dg-colsel-wrapper');
+  if (!wrapper) return;
+  var popover = wrapper.querySelector('.dg-colsel-popover');
+  if (!popover) return;
+  popover.hidden = !popover.hidden;
+  if (!popover.hidden) {
+    var rect = btn.getBoundingClientRect();
+    popover.style.top = (rect.bottom + 4) + 'px';
+    popover.style.left = Math.max(0, rect.right - 240) + 'px';
+    var si = popover.querySelector('.dg-colsel-search-input');
+    if (si) { si.value = ''; dgColSelSearch(si); si.focus(); }
+    dgSyncApplyState(popover);
+  }
+}
+
+function dgColSelSearch(input) {
+  var popover = input.closest('.dg-colsel-popover');
+  var term = input.value.toLowerCase();
+  var visibleCount = 0;
+  popover.querySelectorAll('.dg-colsel-list .dg-colsel-item').forEach(function(label) {
+    var name = label.querySelector('.dg-colsel-label').textContent.toLowerCase();
+    var visible = !term || name.indexOf(term) >= 0;
+    label.style.display = visible ? '' : 'none';
+    if (visible) visibleCount++;
+  });
+  var emptyEl = popover.querySelector('.dg-colsel-empty');
+  if (emptyEl) {
+    emptyEl.hidden = visibleCount > 0;
+    if (visibleCount === 0 && term) {
+      emptyEl.textContent = __i18n.noResultsFor + ' “' + term + '”';
+    }
+  }
+  var selectAllLabel = popover.querySelector('.dg-colsel-all');
+  if (selectAllLabel) selectAllLabel.style.display = visibleCount > 0 ? '' : 'none';
+}
+
+function dgToggleCol(checkbox) {
+  var popover = checkbox.closest('.dg-colsel-popover');
+  dgSyncSelectAll(popover);
+  dgSyncApplyState(popover);
+}
+
+function dgToggleAllCols(checkbox) {
+  var popover = checkbox.closest('.dg-colsel-popover');
+  var checked = checkbox.checked;
+  popover.querySelectorAll('.dg-colsel-list .dg-colsel-item').forEach(function(label) {
+    if (label.style.display === 'none') return;
+    var cb = label.querySelector('input[data-col]');
+    if (cb) cb.checked = checked;
+  });
+  dgSyncApplyState(popover);
+}
+
+function dgSyncSelectAll(popover) {
+  if (!popover) return;
+  var all = popover.querySelectorAll('.dg-colsel-list input[data-col]');
+  var checkedCount = Array.from(all).filter(function(cb) { return cb.checked; }).length;
+  var selectAllCb = popover.querySelector('.dg-colsel-all input');
+  if (selectAllCb) {
+    selectAllCb.checked = checkedCount === all.length;
+    selectAllCb.indeterminate = checkedCount > 0 && checkedCount < all.length;
+  }
+}
+
+function dgSyncApplyState(popover) {
+  if (!popover) return;
+  var anyChecked = !!popover.querySelector('.dg-colsel-list input[data-col]:checked');
+  var applyBtn = popover.querySelector('.dg-colsel-apply');
+  if (applyBtn) applyBtn.disabled = !anyChecked;
+}
+
+function dgColSelApply(btn) {
+  if (btn.disabled) return;
+  var popover = btn.closest('.dg-colsel-popover');
+  var container = popover.closest('.dg-container');
+  var table = container.querySelector('.dg-table');
+  if (!table) return;
+  var hiddenCols = new Set();
+  popover.querySelectorAll('.dg-colsel-list input[data-col]').forEach(function(cb) {
+    if (!cb.checked) hiddenCols.add(parseInt(cb.getAttribute('data-col'), 10) + 1);
+  });
+  Array.from(table.rows).forEach(function(row) {
+    for (var i = 0; i < row.cells.length; i++) {
+      row.cells[i].style.display = hiddenCols.has(i) ? 'none' : '';
+    }
+  });
+  popover.hidden = true;
+  var searchEl = container.querySelector('.dg-search');
+  if (searchEl) dgSearchFilter(searchEl);
+}
+
+// ============================================================
+// Interactive chart editor
+// ============================================================
+var _chState = {};
+
+function chInit(el) {
+  if (!el || el._chInited) return;
+  el._chInited = true;
+  var id = el.id;
+  var cols = JSON.parse(document.getElementById(id + '-cols').textContent  || '[]');
+  var vals = JSON.parse(document.getElementById(id + '-vals').textContent  || '[]');
+  var init = JSON.parse(document.getElementById(id + '-state').textContent || '{}');
+  _chState[id] = Object.assign({ cols: cols, vals: vals }, init);
+
+  var sidebar = document.createElement('div');
+  sidebar.className = 'ch-sidebar';
+  var formDiv = document.createElement('div');
+  formDiv.id = id + '-form';
+  formDiv.className = 'ch-form';
+  sidebar.appendChild(formDiv);
+
+  var area = document.createElement('div');
+  area.className = 'ch-area';
+  var vegaDiv = document.createElement('div');
+  vegaDiv.id = id + '-vega';
+  area.appendChild(vegaDiv);
+
+  el.appendChild(sidebar);
+  el.appendChild(area);
+
+  chBuildForm(id);
+  chRender(id);
+}
+
+// Build a <select> element from [value, label] pairs
+function chSel(value, opts, onChange) {
+  var sel = document.createElement('select');
+  sel.className = 'ch-select';
+  opts.forEach(function(o) {
+    var opt = document.createElement('option');
+    opt.value = o[0];
+    opt.textContent = o[1];
+    if (o[0] === value) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = function() { onChange(sel.value); };
+  return sel;
+}
+
+// Build a labeled form row (label left, input right)
+function chRow(label, input) {
+  var row = document.createElement('div');
+  row.className = 'ch-field-row';
+  var lbl = document.createElement('span');
+  lbl.className = 'ch-label';
+  lbl.textContent = label;
+  row.appendChild(lbl);
+  row.appendChild(input);
+  return row;
+}
+
+function chDivider() {
+  var d = document.createElement('div');
+  d.className = 'ch-divider';
+  return d;
+}
+
+// Build a toggle-with-text row (switch + text input) for axis labels
+function chToggleText(label, enabled, text, placeholder, onToggle, onText) {
+  var row = document.createElement('div');
+  row.className = 'ch-field-row ch-toggle-row';
+  var lbl = document.createElement('span');
+  lbl.className = 'ch-label';
+  lbl.textContent = label;
+  row.appendChild(lbl);
+  var right = document.createElement('div');
+  right.className = 'ch-toggle-right';
+  var toggle = document.createElement('button');
+  toggle.className = 'ch-toggle' + (enabled ? ' ch-toggle-on' : '');
+  toggle.type = 'button';
+  toggle.setAttribute('role', 'switch');
+  toggle.setAttribute('aria-checked', String(!!enabled));
+  var knob = document.createElement('span');
+  knob.className = 'ch-toggle-knob';
+  toggle.appendChild(knob);
+  toggle.onclick = function() {
+    var next = !enabled;
+    onToggle(next);
+  };
+  right.appendChild(toggle);
+  if (enabled) {
+    var inp = document.createElement('input');
+    inp.type = 'text';
+    inp.className = 'ch-text-input';
+    inp.value = text || '';
+    inp.placeholder = placeholder || '';
+    var _t;
+    inp.oninput = function() { clearTimeout(_t); _t = setTimeout(function() { onText(inp.value); }, 150); };
+    right.appendChild(inp);
+  }
+  row.appendChild(right);
+  return row;
+}
+
+// Build the multi-select Y-axis UI: one dropdown per selected column + "Add column" button
+function chMultiY(id, yFields, colOpts) {
+  var s = _chState[id];
+  var wrapper = document.createElement('div');
+  wrapper.className = 'ch-multi-y';
+
+  var usedSet = {};
+  yFields.forEach(function(f) { usedSet[f] = true; });
+
+  yFields.forEach(function(fieldName, idx) {
+    var itemRow = document.createElement('div');
+    itemRow.className = 'ch-multi-y-item';
+    var filteredOpts = colOpts.filter(function(o) {
+      return o[0] === fieldName || !usedSet[o[0]];
+    });
+    var sel = chSel(fieldName, filteredOpts, function(v) {
+      if (s.yAxisLabel === s.yFields[idx]) s.yAxisLabel = v;
+      s.yFields[idx] = v;
+      chBuildForm(id);
+      chRender(id);
+    });
+    itemRow.appendChild(sel);
+    if (yFields.length > 1) {
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'ch-remove-btn';
+      removeBtn.type = 'button';
+      removeBtn.title = __i18n.removeColumn;
+      removeBtn.textContent = '✕';
+      removeBtn.onclick = function() {
+        s.yFields.splice(idx, 1);
+        if (s.yFields.length < 2) s.colorField = null;
+        chBuildForm(id);
+        chRender(id);
+      };
+      itemRow.appendChild(removeBtn);
+    }
+    wrapper.appendChild(itemRow);
+  });
+
+  // "Add column" button — shows remaining columns not yet selected
+  var remaining = colOpts.filter(function(o) { return !usedSet[o[0]]; });
+  if (remaining.length > 0) {
+    var addBtn = document.createElement('button');
+    addBtn.className = 'ch-add-col-btn';
+    addBtn.type = 'button';
+    addBtn.textContent = '+ ' + __i18n.addColumn;
+    var menuDiv = document.createElement('div');
+    menuDiv.className = 'ch-add-col-menu';
+    menuDiv.hidden = true;
+    var hdr = document.createElement('div');
+    hdr.className = 'ch-add-col-header';
+    hdr.textContent = __i18n.columns;
+    menuDiv.appendChild(hdr);
+    remaining.forEach(function(o) {
+      var item = document.createElement('button');
+      item.className = 'ch-add-col-item';
+      item.type = 'button';
+      item.textContent = o[1];
+      item.onclick = function(e) {
+        e.stopPropagation();
+        s.yFields.push(o[0]);
+        if (s.yFields.length >= 2) s.colorField = null;
+        menuDiv.hidden = true;
+        chBuildForm(id);
+        chRender(id);
+      };
+      menuDiv.appendChild(item);
+    });
+    addBtn.onclick = function(e) {
+      e.stopPropagation();
+      menuDiv.hidden = !menuDiv.hidden;
+    };
+    var addWrapper = document.createElement('div');
+    addWrapper.className = 'ch-add-col-wrapper';
+    addWrapper.appendChild(addBtn);
+    addWrapper.appendChild(menuDiv);
+    wrapper.appendChild(addWrapper);
+  }
+  return wrapper;
+}
+
+// Rebuild the editor form based on current state
+function chBuildForm(id) {
+  var s = _chState[id];
+  var form = document.getElementById(id + '-form');
+  if (!form) return;
+  while (form.firstChild) form.removeChild(form.firstChild);
+
+  var colOpts     = s.cols.map(function(c) { return [c.name, c.name]; });
+  var colOptsNone = [['', __i18n.noneParenthesized]].concat(colOpts);
+  var isArc       = s.type === 'arc';
+  var isAgg       = s.aggregate && s.aggregate !== 'none';
+
+  function re(fn) { return function(v) { fn(v); chRender(id); }; }
+
+  // Chart type — primary dropdown matching the live-app "Chart type" field
+  form.appendChild(chRow(__i18n.chartType, chSel(s.type || 'grouped-bar', [
+    ['grouped-bar', __i18n.barChart],
+    ['stacked-bar', __i18n.stackedBarChart],
+    ['line',        __i18n.lineChart],
+    ['area',        __i18n.areaChart],
+    ['arc',         __i18n.pieChart],
+  ], function(v) { s.type = v; chBuildForm(id); chRender(id); })));
+
+  form.appendChild(chDivider());
+
+  // X-axis + sort (not for pie)
+  if (!isArc) {
+    form.appendChild(chRow(__i18n.xAxis, chSel(s.xField || '', colOpts,
+      function(v) { if (s.xAxisLabel === s.xField) s.xAxisLabel = v; s.xField = v; s.timeResolution = 'none'; chBuildForm(id); chRender(id); })));
+
+    // Time resolution — shown when X-axis is a date/timestamp column
+    var xCol = s.cols.find(function(c) { return c.name === s.xField; });
+    if (xCol && xCol.type === 'temporal') {
+      form.appendChild(chRow(__i18n.timeResolution, chSel(s.timeResolution || 'none', [
+        ['none',                     __i18n.none],
+        ['year',                     __i18n.year],
+        ['yearmonth',                __i18n.month],
+        ['yearweek',                 __i18n.week],
+        ['yearmonthdate',            __i18n.day],
+        ['yearmonthdatehours',       __i18n.hours],
+        ['yearmonthdatehoursminutes',__i18n.minutes],
+      ], re(function(v) { s.timeResolution = v; }))));
+    }
+
+    form.appendChild(chRow(__i18n.sort, chSel(s.sortX || 'none', [
+      ['none',         __i18n.none],
+      ['x-ascending',  __i18n.byXAscending],
+      ['x-descending', __i18n.byXDescending],
+      ['y-ascending',  __i18n.byYAscending],
+      ['y-descending', __i18n.byYDescending],
+    ], re(function(v) { s.sortX = v; }))));
+    form.appendChild(chDivider());
+  }
+
+  // Y-axis / Value — multi-select with "Add column" (not for pie)
+  if (isArc) {
+    form.appendChild(chRow(__i18n.value, chSel(
+      (s.yFields && s.yFields[0]) || '', colOpts,
+      re(function(v) { s.yFields = v ? [v] : []; }))));
+  } else {
+    form.appendChild(chRow(__i18n.yAxis, chMultiY(id, s.yFields || [], colOpts)));
+  }
+
+  form.appendChild(chRow(__i18n.aggregate, chSel(s.aggregate || 'none', [
+    ['none',   __i18n.none],
+    ['sum',    __i18n.sum],
+    ['mean',   __i18n.average],
+    ['count',  __i18n.count],
+    ['min',    __i18n.min],
+    ['max',    __i18n.max],
+    ['median', __i18n.median],
+  ], function(v) {
+    s.aggregate = v;
+    if (v !== 'none') s.limit = 0; // Match live app: reset limit when aggregating
+    chBuildForm(id);
+    chRender(id);
+  })));
+
+  form.appendChild(chDivider());
+
+  // Group by (color) — hidden when multiple Y columns are selected (they use fold)
+  if (!s.yFields || s.yFields.length < 2) {
+    form.appendChild(chRow(__i18n.groupBy, chSel(s.colorField || '', colOptsNone,
+      function(v) { s.colorField = v || null; chBuildForm(id); chRender(id); })));
+  }
+
+  // Limit
+  var xColForLimit = s.cols.find(function(c) { return c.name === s.xField; });
+  var xIsRawTemporal = xColForLimit && xColForLimit.type === 'temporal' &&
+                       (!s.timeResolution || s.timeResolution === 'none');
+  if (!isArc && !isAgg && !xIsRawTemporal) {
+    form.appendChild(chRow(__i18n.limit, chSel(String(s.limit != null ? s.limit : -50), [
+      ['0',    __i18n.none],
+      ['-10',  __i18n.top10],
+      ['-25',  __i18n.top25],
+      ['-50',  __i18n.top50],
+      ['-100', __i18n.top100],
+      ['10',   __i18n.bottom10],
+      ['50',   __i18n.bottom50],
+      ['100',  __i18n.bottom100],
+    ], re(function(v) { s.limit = Number(v); }))));
+  }
+
+  form.appendChild(chDivider());
+
+  // Axis labels (toggle + text input)
+  if (!isArc) {
+    form.appendChild(chToggleText(__i18n.xAxisLabel,
+      s.xAxisLabelEnabled, s.xAxisLabel, __i18n.addLabel,
+      function(v) { s.xAxisLabelEnabled = v; chBuildForm(id); chRender(id); },
+      function(v) { s.xAxisLabel = v; chRender(id); }
+    ));
+    form.appendChild(chToggleText(__i18n.yAxisLabel,
+      s.yAxisLabelEnabled, s.yAxisLabel, __i18n.addLabel,
+      function(v) { s.yAxisLabelEnabled = v; chBuildForm(id); chRender(id); },
+      function(v) { s.yAxisLabel = v; chRender(id); }
+    ));
+  }
+}
+
+// Pre-filter vals to top/bottom N groups by aggregate Y value.
+// Runs client-side so the Vega spec stays free of window transforms.
+function chApplyLimit(vals, xF, yF, agg, limit) {
+  if (!limit || !xF || !yF) return vals;
+  var groups = {};
+  vals.forEach(function(row) {
+    var xVal = row[xF];
+    if (xVal == null) return;
+    var k = String(xVal);
+    if (!groups[k]) groups[k] = { sum: 0, count: 0, min: Infinity, max: -Infinity };
+    var yVal = parseFloat(row[yF]);
+    if (!isNaN(yVal)) {
+      groups[k].sum   += yVal;
+      groups[k].count += 1;
+      if (yVal < groups[k].min) groups[k].min = yVal;
+      if (yVal > groups[k].max) groups[k].max = yVal;
+    }
+  });
+  var keys = Object.keys(groups);
+  if (keys.length <= Math.abs(limit)) return vals;
+  keys.sort(function(a, b) {
+    function av(g) {
+      if (agg === 'count') return g.count;
+      if (agg === 'mean')  return g.count > 0 ? g.sum / g.count : 0;
+      if (agg === 'min')   return g.min;
+      if (agg === 'max')   return g.max;
+      return g.sum;
+    }
+    var d = av(groups[b]) - av(groups[a]);
+    return limit < 0 ? d : -d; // negative = top N desc; positive = bottom N asc
+  });
+  var keep = {};
+  keys.slice(0, Math.abs(limit)).forEach(function(k) { keep[k] = true; });
+  return vals.filter(function(row) {
+    var xVal = row[xF];
+    return xVal != null && keep[String(xVal)];
+  });
+}
+
+// Build a Vega-Lite spec from current editor state
+function chBuildSpec(id) {
+  var s       = _chState[id];
+  var type    = s.type;
+  var xF      = s.xField;
+  var yFields = s.yFields || [];
+  var yF      = yFields[0];
+  var useFold = yFields.length >= 2;
+  var colorF  = useFold ? null : s.colorField;
+  var agg     = s.aggregate || 'none';
+  var sortX   = s.sortX || 'none';
+  var limit   = s.limit != null ? s.limit : -50;
+  var timeRes = s.timeResolution || 'none';
+
+  function vt(name) {
+    var col = (s.cols || []).find(function(c) { return c.name === name; });
+    if (!col) return 'nominal';
+    if (col.type === 'quantitative') return 'quantitative';
+    if (col.type === 'temporal')     return 'temporal';
+    return 'nominal';
+  }
+
+  var xIsTemporal = vt(xF) === 'temporal';
+  var shouldApplyLimit = !xIsTemporal || timeRes !== 'none';
+  var filteredVals = (type !== 'arc' && shouldApplyLimit)
+    ? chApplyLimit(s.vals, xF, yF, agg, limit)
+    : s.vals;
+
+  // Vega's temporal parsing mutates data values in-place from date strings
+  // to epoch-ms numbers. If a temporal column is also used as group-by color,
+  // the legend would show raw numbers. Fix: copy the string value into a
+  // separate "__label" field that Vega won't parse, and use that for color.
+  var colorIsTemporal = colorF && vt(colorF) === 'temporal';
+  var colorFieldForEnc = colorF;
+  if (colorIsTemporal) {
+    colorFieldForEnc = '__ch_label_' + colorF;
+    filteredVals = filteredVals.map(function(row) {
+      var copy = Object.assign({}, row);
+      copy[colorFieldForEnc] = String(row[colorF] == null ? '' : row[colorF]);
+      return copy;
+    });
+  }
+
+  var base = {
+    $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+    width: 'container', height: 300,
+    autosize: { type: 'fit', contains: 'padding' },
+    background: 'transparent',
+    data: { values: filteredVals },
+  };
+
+  var legendBottom = { orient: 'bottom', columns: 4 };
+
+  // Axis label helpers: returns title string or empty string (hidden)
+  var xTitle = s.xAxisLabelEnabled ? (s.xAxisLabel || xF || '') : '';
+  var yTitle = s.yAxisLabelEnabled ? (s.yAxisLabel || (useFold ? '' : yF) || '') : '';
+
+  if (type === 'arc') {
+    var theta = { field: yF, type: 'quantitative' };
+    if (agg !== 'none') theta.aggregate = agg;
+    return Object.assign({}, base, {
+      mark: { type: 'arc', tooltip: true },
+      encoding: {
+        theta: theta,
+        color: colorF ? { field: colorF, type: 'nominal', legend: legendBottom } : undefined,
+      },
+    });
+  }
+
+  // When multiple Y fields are selected, use a fold transform to melt
+  // them into a single "variable"/"value" pair — same as the live chart.
+  if (useFold) {
+    base.transform = [{ fold: yFields, as: ['__series__', '__value__'] }];
+  }
+
+  // Build X encoding
+  var xEnc = null;
+  if (xF) {
+    if (xIsTemporal && timeRes !== 'none') {
+      xEnc = {
+        field: xF,
+        type: 'ordinal',
+        timeUnit: { unit: timeRes, utc: true },
+        sort: 'ascending',
+        axis: { labelAngle: -35, labelLimit: 120, title: xTitle },
+      };
+    } else if (xIsTemporal) {
+      xEnc = {
+        field: xF,
+        type: 'temporal',
+        scale: { type: 'utc' },
+        sort: null,
+        axis: { labelAngle: -35, labelLimit: 120, title: xTitle },
+      };
+    } else {
+      xEnc = {
+        field: xF,
+        type:  vt(xF),
+        sort:  null,
+        axis:  { labelAngle: -35, labelLimit: 120, title: xTitle },
+      };
+    }
+    if (sortX !== 'none') {
+      var p = sortX.split('-'), ax = p[0], dir = p[1];
+      xEnc.sort = ax === 'x' ? dir : { encoding: 'y', order: dir };
+    }
+  }
+
+  var yEnc;
+  if (useFold) {
+    yEnc = { field: '__value__', type: 'quantitative', axis: { title: yTitle } };
+    if (agg !== 'none') yEnc.aggregate = agg;
+  } else {
+    yEnc = yF ? { field: yF, type: vt(yF), axis: { title: yTitle } } : null;
+    if (yEnc && agg !== 'none') yEnc.aggregate = agg;
+  }
+
+  var enc = { x: xEnc, y: yEnc, tooltip: true };
+
+  if (useFold) {
+    enc.color = { field: '__series__', type: 'nominal', legend: legendBottom };
+  } else if (colorFieldForEnc) {
+    enc.color = { field: colorFieldForEnc, type: 'nominal', legend: legendBottom };
+  }
+
+  var markType = (type === 'grouped-bar' || type === 'stacked-bar') ? 'bar' : type;
+  if (type === 'grouped-bar') {
+    if (useFold) {
+      enc.xOffset = { field: '__series__', type: 'nominal' };
+      if (yEnc) enc.y = Object.assign({}, yEnc, { stack: false });
+    } else if (colorFieldForEnc) {
+      enc.xOffset = { field: colorFieldForEnc, type: 'nominal' };
+      if (yEnc) enc.y = Object.assign({}, yEnc, { stack: false });
+    }
+  }
+
+  return Object.assign({}, base, {
+    mark: { type: markType, tooltip: true },
+    encoding: enc,
+  });
+}
+
+function chRender(id) {
+  if (typeof vegaEmbed !== 'function') return;
+  var el = document.getElementById(id + '-vega');
+  if (!el) return;
+  vegaEmbed(el, chBuildSpec(id), { actions: false }).catch(console.error);
+}
+</script>
+</body>
+</html>
