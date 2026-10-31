@@ -52,7 +52,7 @@ log = logging.getLogger(__name__)
 # IMPORTANT: These paths are relative to the Airflow project root.
 STAGING_AREA = Path("staging/mongo")
 PROCESSED_LOG_FILE = STAGING_AREA / "processed_dates.txt"
-SNOWFLAKE_TABLE = "YOUR_MONGO_TARGET_TABLE_HERE"  # TODO: Replace with your Snowflake table name
+SNOWFLAKE_TABLE = "PROJECT_DB.RAW.UNDERWOOD_JAY_M3"  # TODO: Replace with your Snowflake table name
 
 
 
@@ -107,8 +107,8 @@ def mongo_template_pipeline():
             mongo_client = get_mongo_client(local_port=tunnel.local_bind_port)
             
             # TODO: Specify your database and collection name
-            db = mongo_client["your_db_name"]
-            collection = db["your_collection_name"]
+            db = mongo_client["stock-data-db"]
+            collection = db["price"]
             log.info(f"Connected to MongoDB collection: {collection.name}")
 
             # --- Define Query ---
@@ -123,7 +123,8 @@ def mongo_template_pipeline():
             
             # TODO: Define the projection to select specific fields from the document.
             # An empty projection `{}` will retrieve all fields.
-            projection = {"_id": 0} # Exclude the default MongoDB ID
+            projection = {"_id": 0, "symbol": 1, "datetime": 1, "open": 1,
+                          "high": 1, "low": 1, "close": 1, "volume": 1} # Exclude the default MongoDB ID
             
             # --- Fetch Data and Stage ---
             records = list(collection.find(query, projection))
@@ -181,6 +182,17 @@ def mongo_template_pipeline():
         # - Rename columns: df.rename(columns={"old_name": "NEW_NAME"}, inplace=True)
         # - Convert data types: df['amount'] = pd.to_numeric(df['amount'])
         # - Create a unique hash ID: df['record_id'] = df.apply(lambda row: hash(tuple(row)), axis=1)
+        df.columns = df.columns.str.upper()
+        df["SYMBOL"] = df["SYMBOL"].astype("string").str.strip().str.upper()
+        df["DATETIME"] = pd.to_datetime(df["DATETIME"], utc=True, errors="raise").dt.tz_localize(None)
+        for column in ["OPEN", "HIGH", "LOW", "CLOSE", "VOLUME"]:
+            df[column] = pd.to_numeric(df[column], errors="raise")
+        if df.isna().any().any() or df["SYMBOL"].eq("").any():
+            raise ValueError("Stock records must have a symbol, datetime, prices, and volume.")
+        if ((df["VOLUME"] < 0) | (df["VOLUME"] % 1 != 0)).any():
+            raise ValueError("Stock volume must be a nonnegative whole number.")
+        df["VOLUME"] = df["VOLUME"].astype("int64")
+        df = df.drop_duplicates(subset=["SYMBOL", "DATETIME"], keep="last")
 
         log.info(f"Transformation complete. DataFrame has {len(df)} rows.")
         return df, date_str
@@ -196,12 +208,45 @@ def mongo_template_pipeline():
             return date_str
 
         log.info(f"Loading {len(df)} rows into Snowflake table: {SNOWFLAKE_TABLE}")
-        # conn = get_snowflake_connection() # TODO: Uncomment
+        conn = get_snowflake_connection() # TODO: Uncomment
         try:
             # TODO: Use conn.cursor() or write_pandas() to load the DataFrame.
             # A MERGE statement is recommended to prevent duplicates if the DAG is re-run
             # before the date is logged.
-            log.info("Placeholder for Snowflake load logic.")
+            from snowflake.connector.pandas_tools import write_pandas
+            database, schema, table = SNOWFLAKE_TABLE.split(".")
+            stage_table = f"{table}_STAGE"
+            with conn.cursor() as cursor:
+                cursor.execute(f"""
+                    CREATE TABLE IF NOT EXISTS {SNOWFLAKE_TABLE} (
+                        SYMBOL VARCHAR, DATETIME TIMESTAMP_NTZ,
+                        OPEN FLOAT, HIGH FLOAT, LOW FLOAT, CLOSE FLOAT,
+                        VOLUME NUMBER(38, 0)
+                    )
+                """)
+                cursor.execute(f"""
+                    CREATE TEMPORARY TABLE {database}.{schema}.{stage_table}
+                    LIKE {SNOWFLAKE_TABLE}
+                """)
+                success, _, n_rows, _ = write_pandas(
+                    conn, df, stage_table, database=database, schema=schema,
+                    use_logical_type=True
+                )
+                if not success or n_rows != len(df):
+                    raise AirflowException("Snowflake staging load did not load all stock records.")
+                cursor.execute(f"""
+                    MERGE INTO {SNOWFLAKE_TABLE} t
+                    USING {database}.{schema}.{stage_table} s
+                    ON t.SYMBOL = s.SYMBOL AND t.DATETIME = s.DATETIME
+                    WHEN MATCHED THEN UPDATE SET
+                        t.OPEN = s.OPEN, t.HIGH = s.HIGH, t.LOW = s.LOW,
+                        t.CLOSE = s.CLOSE, t.VOLUME = s.VOLUME
+                    WHEN NOT MATCHED THEN INSERT
+                        (SYMBOL, DATETIME, OPEN, HIGH, LOW, CLOSE, VOLUME)
+                    VALUES
+                        (s.SYMBOL, s.DATETIME, s.OPEN, s.HIGH, s.LOW, s.CLOSE, s.VOLUME)
+                """)
+            log.info(f"Successfully merged {n_rows} stock records into {SNOWFLAKE_TABLE}.")
 
             # --- Log Processed Date on Success ---
             with open(PROCESSED_LOG_FILE, "a") as f:
@@ -212,7 +257,7 @@ def mongo_template_pipeline():
             log.error(f"Snowflake load failed: {e}")
             raise
         finally:
-            # if conn: conn.close() # TODO: Uncomment
+            if conn: conn.close() # TODO: Uncomment
             log.info("Snowflake connection placeholder closed.")
         
         return date_str
