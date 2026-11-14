@@ -1,0 +1,3 @@
+Notebook: UNDERWOOD_J_LAB3
+
+One fact row represents one support case, which keeps case counts and resolution time consistent. Case descriptions use Type 1 for the latest status; users, contacts, and accounts use Type 2 for profile history. Dates use Type 0 because calendar details do not change. The bridge stores self and ancestor paths at any depth, so cases can be grouped under any manager through joins. This notebook follows the template's initial-load approach: user and contact history starts today, so it cannot reconstruct older profiles. Contact accounts are linked only when support cases identify one clear account.

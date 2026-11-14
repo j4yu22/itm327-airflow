@@ -1,6 +1,9 @@
 pymongo
 finnhub-python
 sshtunnel
+paramiko==3.5.1
+apache-airflow-providers-ssh==5.0.4
+apache-airflow-providers-sftp==5.8.2
 yfinance
 pandas
 pandas_market_calendars
