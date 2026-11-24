@@ -1,0 +1,9 @@
+.git
+.env
+.env.*
+secrets/
+**/*.p8
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx

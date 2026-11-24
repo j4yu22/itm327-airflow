@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 from sshtunnel import SSHTunnelForwarder
 import time
 from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "dags"))
+from ssh_host_keys import required_host_key
 
 load_dotenv(Path(__file__).parent.parent / '.env')
 
@@ -21,6 +25,9 @@ tunnel = SSHTunnelForwarder(
     (SSH_HOST, SSH_PORT),
     ssh_username=SSH_USER,
     ssh_password=SSH_PASSWORD,
+    ssh_host_key=required_host_key("SSH_HOST_KEY"),
+    allow_agent=False,
+    host_pkey_directories=[],
     remote_bind_address=(MONGO_HOST, MONGO_PORT),
     local_bind_address=('127.0.0.1', 27017)
 )

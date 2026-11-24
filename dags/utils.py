@@ -13,6 +13,7 @@ from sshtunnel import SSHTunnelForwarder
 from pymongo import MongoClient
 import stat
 import paramiko
+from ssh_host_keys import required_host_key
 
 # -------------------------------------------------------------------
 # Utility Functions
@@ -140,6 +141,9 @@ def create_ssh_tunnel():
         (SSH_HOST, SSH_PORT),
         ssh_username=SSH_USER,
         ssh_password=SSH_PASSWORD,
+        ssh_host_key=required_host_key("SSH_HOST_KEY"),
+        allow_agent=False,
+        host_pkey_directories=[],
         remote_bind_address=(MONGO_HOST, MONGO_PORT),
         local_bind_address=("127.0.0.1", 27017)
     )
@@ -205,13 +209,17 @@ def create_sftp_connection():
     username = os.getenv("SFTP_USER")
     password = os.getenv("SFTP_PASSWORD")
 
+    host_key = required_host_key("SFTP_HOST_KEY")
+    transport = None
     try:
         transport = paramiko.Transport((host, port))
-        transport.connect(username=username, password=password)
+        transport.connect(hostkey=host_key, username=username, password=password)
         sftp = paramiko.SFTPClient.from_transport(transport)
         logging.info(f"✅ Connected to SFTP: {host}")
         return sftp
     except Exception as e:
+        if transport is not None:
+            transport.close()
         logging.error(f"❌ Failed to connect to SFTP: {e}")
         raise
 

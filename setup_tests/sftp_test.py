@@ -4,12 +4,17 @@ import time
 import logging
 from dotenv import load_dotenv
 import paramiko
+from pathlib import Path
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "dags"))
+from ssh_host_keys import required_host_key
 
 ## you may need to install these packages in your environment:
 # pip install paramiko==3.5.1 python-dotenv sshtunnel==0.4.0
 
 # Load env
-load_dotenv("../.env")
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 SFTP_HOST = os.getenv("SFTP_HOST")
 SFTP_PORT = int(os.getenv("SFTP_PORT"))
@@ -28,11 +33,15 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 def download_file():
+    host_key = required_host_key("SFTP_HOST_KEY")
     try:
         logger.info("Connecting to SFTP…")
         ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect(SFTP_HOST, port=SFTP_PORT, username=SFTP_USER, password=SFTP_PASSWORD)
+        host_label = SFTP_HOST if SFTP_PORT == 22 else f"[{SFTP_HOST}]:{SFTP_PORT}"
+        ssh.get_host_keys().add(host_label, host_key.get_name(), host_key)
+        ssh.set_missing_host_key_policy(paramiko.RejectPolicy())
+        ssh.connect(SFTP_HOST, port=SFTP_PORT, username=SFTP_USER, password=SFTP_PASSWORD,
+                    allow_agent=False, look_for_keys=False)
         logger.info("✅ SSH connection established.")
 
         sftp = ssh.open_sftp()
