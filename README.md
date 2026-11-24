@@ -11,7 +11,9 @@ This is a ready-to-run Apache Airflow + Docker environment designed for classroo
 1. Make sure you have Docker installed on your machine. You can download it from the official Docker website. Here is the link: https://docs.docker.com/get-docker/
 
 ## Setup your .env file
-1. Edit the `editme.env` by renaming it to just `.env`
+1. Copy `.env.example` to `.env` and fill in the settings locally. Generate two different passwords with `python -c "import secrets; print(secrets.token_hex(32))"` (run it twice). Put one in `POSTGRES_PASSWORD` and the other in `_AIRFLOW_WWW_USER_PASSWORD`. Keep the database password URL-safe, as it is used in connection URLs. Never paste your credentials into an issue or commit them.
+   - If you use `ENV_FILE_PATH` to select a different file, also pass that same file with `docker compose --env-file path/to/file` so Compose can read the required settings.
+   - **Existing installs:** Changing these initializer values does not change passwords in an existing database volume or overwrite the Airflow account. Before switching an existing setup, back up the metadata database and work with the administrator to rotate both existing account passwords in place. Do not delete the volume just to update credentials. Keep the existing Fernet key if the instance already uses one; rotate it with Airflow's supported procedure, not by replacing it blindly.
 2. Your instructor will share the `SNOWFLAKE_ACCOUNT` value in Slack. It uses the `ORG-ACCOUNT` format (e.g. `VXZJSRC-AG60135`), not the retired `SFEDU02` account or the older `xyz12345.us-west-2` locator. If you look up your account in Snowsight, the snippet there may include `authenticator = "externalbrowser"` — ignore that line; this stack uses key-pair auth (next section).
 3. For FA26, Airflow project DAGs load into `PROJECT_DB.RAW`. The SQL modeling labs use `SNOWBEARAIR_DB.PUBLIC` as their source and `SNOWBEARAIR_DB.MODELED` for student-built tables.
 
@@ -30,7 +32,7 @@ pip install cryptography paramiko==3.5.1 python-dotenv sshtunnel==0.4.0
 python airflow-core-fernet-key.py
 ```
 
-4. Copy the generated fernet key and paste it into the `.env` file in the `FERNET_KEY` variable.
+4. Set `FERNET_KEY` in `.env` to the generated key on a new setup. Keep it private and stable; Airflow uses it for existing encrypted connections.
 
 ## WINDOWS Generate a Public Key for Snowflake
 1. Generate SSH Keys for Snowflake Connection. Run the following commands in a `git-bash shell`. (Windows users do not run in powershell, use a git-bash shell only)
@@ -42,12 +44,7 @@ openssl rsa -in ~/.ssh/dbt_key.p8 -pubout -out ~/.ssh/dbt_key.pub
 cat ~/.ssh/dbt_key.pub | clip
 ```
 
-2. In your `.env` file, set `HOST_USERNAME` to your Windows username (the one from `C:\Users\<this>`) and update `SNOWFLAKE_PRIVATE_KEY_PATH` to match. Both values must use the **same** username, and the path uses forward slashes — it's the in-container path, not a Windows path, so do **not** put `C:` in front:
-```
-HOST_USERNAME=your-username
-SNOWFLAKE_PRIVATE_KEY_PATH=/Users/your-username/.ssh/dbt_key.p8
-```
-
+2. Set `SNOWFLAKE_KEY_HOST_PATH` in `.env` to the absolute path of this **private** file on your computer, for example `C:/Users/your-username/.ssh/dbt_key.p8`. Use forward slashes. Compose makes only this file available to the Airflow worker.
 3. Your public key is now copied to your clipboard — paste it when prompted by your Snowflake admin (your teacher) to set up key pair authentication.
 
 ## MAC Generate a Public Key for Snowflake
@@ -61,12 +58,7 @@ openssl rsa -in ~/.ssh/dbt_key.p8 -pubout -out ~/.ssh/dbt_key.pub
 cat ~/.ssh/dbt_key.pub | pbcopy
 ```
 
-2. In your `.env` file, set `HOST_USERNAME` to your Mac short name (the one shown in `/Users/<this>`) and update `SNOWFLAKE_PRIVATE_KEY_PATH` to match. Both values must use the **same** username:
-```
-HOST_USERNAME=your-username
-SNOWFLAKE_PRIVATE_KEY_PATH=/Users/your-username/.ssh/dbt_key.p8
-```
-
+2. Set `SNOWFLAKE_KEY_HOST_PATH` in `.env` to the absolute path of this **private** file on your computer, for example `/Users/your-username/.ssh/dbt_key.p8`. Compose makes only this file available to the Airflow worker.
 3. Your public key is now copied to your clipboard — paste it when prompted by your Snowflake admin (your teacher) to set up key pair authentication.
 
 Resource: [Snowflake Documentation on Key Pair Auth](https://docs.snowflake.com/en/user-guide/key-pair-auth)
@@ -84,16 +76,14 @@ cat ~/.ssh/dbt_key.pub | xclip -selection clipboard
 
 If `xclip` is not installed, either install it (`sudo apt install xclip`) or run `cat ~/.ssh/dbt_key.pub` and copy the output manually.
 
-2. In your `.env` file, set `HOST_USERNAME` to your Linux username (the one shown in `/home/<this>`) and update `SNOWFLAKE_PRIVATE_KEY_PATH` to match. Note: even though your host home is `/home/<you>`, the in-container path is under `/Users/` — the compose file mounts `~/.ssh` to `/Users/${HOST_USERNAME}/.ssh` regardless of host OS, so use this form:
-
-```
-HOST_USERNAME=your-username
-SNOWFLAKE_PRIVATE_KEY_PATH=/Users/your-username/.ssh/dbt_key.p8
-```
-
+2. Set `SNOWFLAKE_KEY_HOST_PATH` in `.env` to the absolute path of this **private** file on your computer, for example `/home/your-username/.ssh/dbt_key.p8`. Set `AIRFLOW_UID` in `.env` to the output of `id -u` on Linux so the worker has the same UID. Compose makes only this file available to the worker.
 3. Your public key is on your clipboard (or in `~/.ssh/dbt_key.pub`) — paste it when prompted by your Snowflake admin (your teacher) to set up key pair authentication.
 
 # ✅ Getting Airflow Started
+
+## Configure the trusted SSH server keys
+
+Obtain each server's public host key from your instructor or the server administrator via a trusted channel. In `.env`, set `SSH_HOST_KEY` for the MongoDB SSH tunnel and `SFTP_HOST_KEY` for SFTP. Use the key type and base64 data from the trusted OpenSSH public key, in quotes and without a hostname prefix. This is the server's public key, not your personal public or private key. If you do not use one service, its variable may remain blank; attempts to use that service will fail before connecting. If the server rotates its key, verify the replacement with the administrator before updating your pin.
 
 ## How to Build and Spin Up the Docker Container
 
@@ -109,7 +99,7 @@ Note: you only run the `--build` flag the first time or if you change something 
 
 Login with:
 - **Username:** `airflow`
-- **Password:** `airflow`
+- **Password:** the unique value you set for `_AIRFLOW_WWW_USER_PASSWORD` on a fresh install.
 
 ## How to shut down docker
 1. Run this in the terminal in VS Code
@@ -124,28 +114,17 @@ docker compose down
 docker compose down --volumes --remove-orphans
 ```
 
-### Windows: `FileNotFoundError` on the Snowflake private key
-Symptom: DAG task fails with `FileNotFoundError: [Errno 2] No such file or directory: '/Users/<you>/.ssh/dbt_key.p8'` even though the file exists on your Windows machine.
+### The worker cannot read the Snowflake private key
 
-Cause: the `HOST_USERNAME` value in your `.env` doesn't match the username portion of `SNOWFLAKE_PRIVATE_KEY_PATH`, or `HOST_USERNAME` is missing entirely. The compose file mounts `~/.ssh` to `/Users/${HOST_USERNAME}/.ssh` inside the container — if those two values disagree, the path your DAG reads won't exist.
+Set `SNOWFLAKE_KEY_HOST_PATH` to the dedicated private key **file** on the host. Do not point to the whole SSH directory. `HOST_USERNAME` and your old `SNOWFLAKE_PRIVATE_KEY_PATH` settings are not needed in the Compose setup. Do not put a base64 copy of the key in the shared `.env`. If the file has a passphrase, set `SNOWFLAKE_PRIVATE_KEY_PASSPHRASE` locally.
 
-Also: do **not** put `C:` anywhere in your `.env` paths. `SNOWFLAKE_PRIVATE_KEY_PATH` is read *inside* the Linux container, so the path uses forward slashes and lives under `/Users/<your_username>/.ssh/`, regardless of OS.
+Check readability without displaying or copying the key:
 
-Fix: open your `.env` and confirm both lines use the same username:
-```
-HOST_USERNAME=your-windows-username
-SNOWFLAKE_PRIVATE_KEY_PATH=/Users/your-windows-username/.ssh/dbt_key.p8
-```
-Then recreate the containers (a restart is not enough — mounts only re-evaluate on recreate):
 ```bash
-docker compose down
-docker compose up -d --build
+docker compose exec airflow-worker test -r /run/secrets/snowflake_private_key
 ```
-Verify the key is visible inside the container:
-```bash
-docker compose exec airflow-scheduler ls -la /Users/<your_username>/.ssh/
-```
-If `dbt_key.p8` appears in that listing, the mount is good.
+
+If it is not readable, check the host path, Docker Desktop file sharing settings, and the host file's ownership. On Linux, set `AIRFLOW_UID` to your host UID. Keep the key readable only to its owner (`chmod 600` on Unix); do not broaden access to make the container work. Recreate the worker after changing mount settings.
 
 ### DAG runs stuck "Running" or repeatedly retrying on first startup
 Symptom: shortly after `docker compose up`, the `starter_dag` (or any DAG) shows many DAG runs queued up at once, the first task (e.g. `extract_activity`) is stuck "Running" through multiple retries, and the Docker stack feels sluggish or unresponsive.
